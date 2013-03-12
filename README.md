@@ -1,4 +1,5 @@
-overture
-========
+# Overture
 
-A small, fast, JavaScript-based JavaScript parser, grown from acorn
+A fast JavaScript parser in JavaScript.
+
+Based on acorn http://marijnhaverbeke.nl/acorn/
