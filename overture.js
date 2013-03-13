@@ -1009,7 +1009,7 @@
         }
     }
 
-    function readToken_slash() { // '/'
+    function readToken_slash() {
         ++tokPos;
         if (tokRegexpAllowed) {
             readRegexp();
@@ -1027,7 +1027,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_mult() { // '%*'
+    function readToken_multiply() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 61) {
@@ -1039,7 +1039,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_modulo() { // '%*'
+    function readToken_modulo() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 61) {
@@ -1051,7 +1051,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_OR() { // '|'
+    function readToken_OR() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 124) {
@@ -1066,7 +1066,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_AND() { // '&'
+    function readToken_AND() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 38) {
@@ -1081,7 +1081,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_XOR() { // '^'
+    function readToken_XOR() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 61) {
@@ -1093,7 +1093,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_plus() { // '+'
+    function readToken_plus() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 43) {
@@ -1108,7 +1108,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_min() { // '-'
+    function readToken_minus() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 45) {
@@ -1133,7 +1133,7 @@
         }
     }
 
-    function readToken_lt() { // '<'
+    function readToken_lessThan() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 60) {
@@ -1170,7 +1170,7 @@
         }
     }
 
-    function readToken_gt() { // '>'
+    function readToken_greaterThan() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 62) {
@@ -1186,7 +1186,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_excl() { // '!'
+    function readToken_exclamation() { // '!'
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 61) {
@@ -1203,7 +1203,7 @@
         tokRegexpAllowed = true;
     }
 
-    function readToken_eq() { // '='
+    function readToken_equal() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
         if (nextChar === 61) {
@@ -1280,16 +1280,16 @@
         case 124: readToken_OR(); break;
         case 38: readToken_AND(); break;
         case 94: readToken_XOR(); break;
-        case 60: readToken_lt(); break;
-        case 62: readToken_gt(); break;
-        case 61: readToken_eq(); break;
-        case 33: readToken_excl(); break;
+        case 60: readToken_lessThan(); break;
+        case 62: readToken_greaterThan(); break;
+        case 61: readToken_equal(); break;
+        case 33: readToken_exclamation(); break;
         case 126: readToken_BITWISE_NOT(); break;
 
         case 37: readToken_modulo(); break;
-        case 42: readToken_mult(); break;
+        case 42: readToken_multiply(); break;
         case 43: readToken_plus(); break;
-        case 45: readToken_min(); break;
+        case 45: readToken_minus(); break;
 
         default:
             readToken_default(code);
