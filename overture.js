@@ -205,7 +205,7 @@
     // These are the general types. The `type` property is only used to
     // make them recognizeable when debugging.
 
-    function type_t(type) {
+    function Node(type) {
         this.type = type;
     }
 
@@ -489,74 +489,74 @@
     };
 
     var AssignmentOperator = {
-            'eq'                                        : new String('='),
-            'plus'                                    : new String('+='),
-            'minus'                                 : new String('-='),
-            'mult'                                    : new String('*='),
-            'div'                                     : new String('/='),
-            'modulo'                                : new String('%='),
-            'left_shift'                        : new String('<<='),
-            'right_shift'                     : new String('>>='),
-            'zero_fill_right_shift' : new String('>>>='),
-            'OR'                                    : new String('|='),
-            'XOR'                                 : new String('^='),
-            'AND'                                     : new String('&=')
+        'eq': new String('='),
+        'plus': new String('+='),
+        'minus': new String('-='),
+        'mult': new String('*='),
+        'div': new String('/='),
+        'modulo': new String('%='),
+        'left_shift': new String('<<='),
+        'right_shift': new String('>>='),
+        'zero_fill_right_shift': new String('>>>='),
+        'OR': new String('|='),
+        'XOR': new String('^='),
+        'AND': new String('&=')
     };
 
     var BinaryOperator = {
-            'eq_eq'                                 : new String('=='),
-            'ex_eq'                                 : new String('!='),
-            'eq_eq_eq'                            : new String('==='),
-            'ex_eq_eq'                            : new String('!=='),
-            'lt'                                        : new String('<'),
-            'lt_eq'                                 : new String('<='),
-            'gt'                                        : new String('>'),
-            'gt_eq'                                 : new String('>='),
-            'left_shift'                        : new String('<<'),
-            'right_shift'                     : new String('>>'),
-            'zero_fill_right_shift' : new String('>>>'),
-            'plus'                                    : new String('+'),
-            'minus'                                 : new String('-'),
-            'mult'                                    : new String('*'),
-            'div'                                     : new String('/'),
-            'modulo'                                : new String('%'),
-            'OR'                                    : new String('|'),
-            'AND'                                     : new String('&'),
-            'XOR'                                 : new String('^'),
-            'in'                                        : new String('in'),
-            'instanceof'                        : new String('instanceof')
+        'eq_eq': new String('=='),
+        'ex_eq': new String('!='),
+        'eq_eq_eq': new String('==='),
+        'ex_eq_eq': new String('!=='),
+        'lt': new String('<'),
+        'lt_eq': new String('<='),
+        'gt': new String('>'),
+        'gt_eq': new String('>='),
+        'left_shift': new String('<<'),
+        'right_shift': new String('>>'),
+        'zero_fill_right_shift': new String('>>>'),
+        'plus': new String('+'),
+        'minus': new String('-'),
+        'mult': new String('*'),
+        'div': new String('/'),
+        'modulo': new String('%'),
+        'OR': new String('|'),
+        'AND': new String('&'),
+        'XOR': new String('^'),
+        'in': new String('in'),
+        'instanceof': new String('instanceof')
     };
 
     var LogicalOperator = {
-            'OR'    : new String('||'),
-            'AND' : new String('&&')
+        'OR': new String('||'),
+        'AND': new String('&&')
     };
 
     var UpdateOperator = {
-            'increment' : new String('++'),
-            'decrement' : new String('--')
+        'increment': new String('++'),
+        'decrement': new String('--')
     };
 
     var UnaryOperator = {
-            'minus': new String('-'),
-            'plus': new String('+'),
-            'ex': new String('!'),
-            'BITWISE_NOT': new String('~'),
-            'typeof': new String('typeof'),
-            'void': new String('void'),
-            'delete': new String('delete')
+        'minus': new String('-'),
+        'plus': new String('+'),
+        'ex': new String('!'),
+        'BITWISE_NOT': new String('~'),
+        'typeof': new String('typeof'),
+        'void': new String('void'),
+        'delete': new String('delete')
     };
 
     var VariableDeclarationKind = {
-            'var': new String('var'),
-            'let': new String('let'),
-            'const': new String('const')
+        'var': new String('var'),
+        'let': new String('let'),
+        'const': new String('const')
     };
 
     var PropertyKind = {
-            'init': new String('init'),
-            'get': new String('get'),
-            'set': new String('set')
+        'init': new String('init'),
+        'get': new String('get'),
+        'set': new String('set')
     };
 
     // These are used when `options.locations` is on, in order to track
@@ -569,8 +569,11 @@
     }
 
 
-    var _num = new type_t("num"), _regexp = new type_t("regexp"), _string = new type_t("string");
-    var _name = new type_t("name"), _eof = new binop_t(0);
+    var _num = new Node("num"),
+        _regexp = new Node("regexp"),
+        _string = new Node("string"),
+        _name = new Node("name"),
+        _eof = new binop_t(0);
 
     // Keyword tokens. The `keyword` property (also used in keyword-like
     // operators) indicates that the token originated from an
@@ -639,7 +642,6 @@
 
 
     var _in = new binop_t(7);
-
 
     //
     var _void = new prefix_t(); _void.prefix = true;
@@ -780,61 +782,61 @@
     var isKeyword = function(str, type) {
         switch (str.length) {
             case 4:
-                    switch (str) {
-                            case "null": return _null;
-                            case "else": tokRegexpAllowed = false; return _else;
-                            case "true": return _true;
-                            case "this": return _this;
-                            case "case": tokRegexpAllowed = true; return _case;
-                            case "with": return _with;
-                            case "void": return _void;
-                    }
-                    return type;
+                switch (str) {
+                    case "null": return _null;
+                    case "else": tokRegexpAllowed = false; return _else;
+                    case "true": return _true;
+                    case "this": return _this;
+                    case "case": tokRegexpAllowed = true; return _case;
+                    case "with": return _with;
+                    case "void": return _void;
+                }
+                return type;
             case 5:
-                    switch (str) {
-                            case "false": return _false;
-                            case "break": return _break;
-                            case "while": return _while;
-                            case "catch": return _catch
-                            case "throw": tokRegexpAllowed = false; return _throw;
-                    }
-                    return type;
+                switch (str) {
+                    case "false": return _false;
+                    case "break": return _break;
+                    case "while": return _while;
+                    case "catch": return _catch
+                    case "throw": tokRegexpAllowed = false; return _throw;
+                }
+                return type;
             case 3:
-                    switch (str) {
-                            case "var": return _var;
-                            case "for": return _for;
-                            case "new": tokRegexpAllowed = false; return _new;
-                            case "try": return _try;
-                    }
-                    return type;
+                switch (str) {
+                    case "var": return _var;
+                    case "for": return _for;
+                    case "new": tokRegexpAllowed = false; return _new;
+                    case "try": return _try;
+                }
+                return type;
             case 6:
-                    switch (str) {
-                            case "return": tokRegexpAllowed = true; return _return;
-                            case "switch": return _switch;
-                            case "typeof": return _typeof;
-                            case "delete": return _delete;
-                    }
-                    return type;
+                switch (str) {
+                    case "return": tokRegexpAllowed = true; return _return;
+                    case "switch": return _switch;
+                    case "typeof": return _typeof;
+                    case "delete": return _delete;
+                }
+                return type;
             case 8:
-                    switch (str) {
-                            case "function": return _function;
-                            case "continue": return _continue;
-                            case "debugger": return _debugger;
-                    }
-                    return type;
+                switch (str) {
+                    case "function": return _function;
+                    case "continue": return _continue;
+                    case "debugger": return _debugger;
+                }
+                return type;
             case 2:
-                    switch (str) {
-                            case "if": return _if;
-                            case "in": tokRegexpAllowed = true; return _in;
-                            case "do": return _do;
-                    }
-                    return type;
+                switch (str) {
+                    case "if": return _if;
+                    case "in": tokRegexpAllowed = true; return _in;
+                    case "do": return _do;
+                }
+                return type;
             case 7:
-                    switch (str) {
-                            case "default": return _default;
-                            case "finally": return _finally;
-                    }
-                    return type;
+                switch (str) {
+                    case "default": return _default;
+                    case "finally": return _finally;
+                }
+                return type;
             case 10: if(str === "instanceof") return _instanceof;
             default: return type;
         }
@@ -1126,7 +1128,6 @@
     function readToken_lt() { // '<'
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
-        var size = 1;
         if (nextChar === 60) {
             if (input.charCodeAt(tokPos + 1) === 61) {
                 tokPos += 2;
@@ -1149,7 +1150,6 @@
     function readToken_gt() { // '>'
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
-        var size = 1;
         if (nextChar === 62) {
             nextChar = input.charCodeAt(tokPos + 1);
 
@@ -1222,7 +1222,7 @@
 
     function readMaybeHex() {
         nextChar = input.charCodeAt(tokPos+1);
-        if (nextChar === 120 || nextChar === 88) {
+        if (nextChar === 120 || nextChar === 88) { // xX
             readHexNumber();
         } else {
             readNumber(48);
