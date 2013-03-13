@@ -6,6 +6,38 @@ if (typeof exports != "undefined") {
   var testFail = require("./driver.js").testFail;
 }
 
+test("if(1)/  foo/", {
+  type: "Program",
+  start: 0,
+  end: 12,
+  body: [
+    {
+      type: "IfStatement",
+      start: 0,
+      end: 12,
+      test: {
+        type: "Literal",
+        start: 3,
+        end: 4,
+        value: 1,
+        raw: "1"
+      },
+      consequent: {
+        type: "ExpressionStatement",
+        start: 5,
+        end: 12,
+        expression: {
+          type: "Literal",
+          start: 5,
+          end: 12,
+          raw: "/  foo/"
+        }
+      },
+      alternate: null
+    }
+  ]
+});
+
 test("4 + 5 << (6)", {
   type: "Program",
   body: [{

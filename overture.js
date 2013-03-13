@@ -1299,7 +1299,7 @@
     function readToken_forceRegexp() {
         tokStart = tokPos;
 //        if (options.locations) tokStartLoc = new line_loc_t();
-        tokCommentsBefore = tokComments;
+//        tokCommentsBefore = tokComments;
         return readRegexp();
     }
 
