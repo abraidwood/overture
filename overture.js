@@ -779,7 +779,7 @@
     // And the keywords.
 
     var isKeyword = function(str, type) {
-        switch (str.length) {
+        switch (tokPos - tokStart) {
             case 4:
                 switch (str) {
                     case "null": return _null;
@@ -1492,65 +1492,68 @@
 
     var rs_str = [];
 
+    function readString_Esc() {
+        var ch = input.charCodeAt(++tokPos);
+        ++tokPos;
+
+        switch(ch) {
+            case 110: rs_str.push('\n'); break; // 'n' -> '\n'
+            case 114: rs_str.push('\r'); break; // 'r' -> '\r'
+            case 120: rs_str.push(String.fromCharCode(readHexChar(2))); break; // 'x'
+            case 117: rs_str.push(String.fromCharCode(readHexChar(4))); break; // 'u'
+            case 85: rs_str.push(String.fromCharCode(readHexChar(8))); break; // 'U'
+            case 116: rs_str.push('\t'); break; // 't' -> '\t'
+            case 98: rs_str.push('\b'); break; // 'b' -> '\b'
+            case 118: rs_str.push('\u000b'); break; // 'v' -> '\u000b'
+            case 102: rs_str.push('\f'); break; // 'f' -> '\f'
+            case 13: // '\r'
+                if (input.charCodeAt(tokPos) === 10) ++tokPos; // '\r\n'
+            case 10: // ' \n'
+                // if(options.locations) {
+                //     tokLineStart = tokPos;
+                //     ++tokCurLine;
+                // }
+                break;
+
+            default:
+                if(ch >= 48 & ch <= 55) { // 0-7 -> possible octal
+                    ch = readOctalLiteral(ch);
+                }
+                rs_str.push(String.fromCharCode(ch));
+        }
+    }
+
     function readString(quote) {
         tokPos++;
         rs_str.length = 0;
 
         var start = tokPos;
         var lastEsc = tokPos;
+        var ch = 0;
+        var str = '';
 
         while (tokPos < inputLen) {
-            var ch = input.charCodeAt(tokPos);
+            ch = input.charCodeAt(tokPos);
 
             if (ch === quote) {
                 if(lastEsc === start) {
-                    ch = input.substring(lastEsc,tokPos);
+                    str = input.substring(lastEsc,tokPos);
                 } else {
                     if(lastEsc !== tokPos) {
                         rs_str.push(input.substring(lastEsc,tokPos));
                     }
-                    ch = rs_str.join('');
+                    str = rs_str.join('');
                 }
-
                 ++tokPos;
                 tokRegexpAllowed = false;
-                finishToken(_string, ch);
+                finishToken(_string, str);
                 return;
 
             } else if (ch === 92) { // '\'
                 if(lastEsc !== tokPos) {
                     rs_str.push(input.substring(lastEsc,tokPos));
                 }
-
-                ch = input.charCodeAt(++tokPos);
-                ++tokPos;
-
-                switch(ch) {
-                    case 110: rs_str.push('\n'); break; // 'n' -> '\n'
-                    case 114: rs_str.push('\r'); break; // 'r' -> '\r'
-                    case 120: rs_str.push(String.fromCharCode(readHexChar(2))); break; // 'x'
-                    case 117: rs_str.push(String.fromCharCode(readHexChar(4))); break; // 'u'
-                    case 85: rs_str.push(String.fromCharCode(readHexChar(8))); break; // 'U'
-                    case 116: rs_str.push('\t'); break; // 't' -> '\t'
-                    case 98: rs_str.push('\b'); break; // 'b' -> '\b'
-                    case 118: rs_str.push('\u000b'); break; // 'v' -> '\u000b'
-                    case 102: rs_str.push('\f'); break; // 'f' -> '\f'
-                    case 13: // '\r'
-                        if (input.charCodeAt(tokPos) === 10) ++tokPos; // '\r\n'
-                    case 10: // ' \n'
-                        // if(options.locations) {
-                        //     tokLineStart = tokPos;
-                        //     ++tokCurLine;
-                        // }
-                        break;
-
-                    default:
-                        if(ch >= 48 & ch <= 55) { // 0-7 -> possible octal
-                            ch = readOctalLiteral(ch);
-                        }
-                        rs_str.push(String.fromCharCode(ch));
-                }
-
+                readString_Esc();
                 lastEsc = tokPos;
 
             } else if (ch === 13 || ch === 10 || ch === 8232 || ch === 8329) {
@@ -1619,7 +1622,7 @@
         var ch = input.charCodeAt(tokPos);
         if (isIdentifierStart(ch)) {
             ++tokPos;
-        } else if (ch === 92) { // "\"
+        } else if (ch === 92) {
             return readWord_Esc(input.substring(start, tokPos), isIdentifierStart);
         }
 
@@ -1628,7 +1631,7 @@
 
             if (isIdentifierChar(ch)) {
                 ++tokPos;
-            } else if (ch === 92) { // "\"
+            } else if (ch === 92) {
                 return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
             } else {
                 break;
@@ -1659,13 +1662,14 @@
 
     // Read an identifier or keyword token. Will check for reserved
     // words when necessary.
+
     function readWord() {
         containsEsc = false;
         tokRegexpAllowed = false;
 
         var word = readWord_n();
         var type = _name;
-        if (word.length > 1 && containsEsc === false) {
+        if (tokPos - tokStart > 1 && containsEsc === false) {
             type = isKeyword(word, type);
             if(strict && type === _name && isStrictReservedWord(word)) {
                 raise(tokStart, "The keyword '" + word + "' is reserved");
@@ -2377,7 +2381,7 @@
                 node.operator = tokVal;
                 next();
                 node.argument = parseMaybeUnary(noIn);
-                if (strict && node.operator === "delete" &&
+                if (strict && node.operator === 'delete' &&
                              node.argument instanceof Identifier)
                 raise(tokPos, "Deleting local variable in strict mode");
             }
@@ -2703,5 +2707,5 @@
         next();
         return node;
     }
-})(typeof exports === "undefined" ? (self.overture = {}) : exports);
+})(typeof exports === 'undefined' ? (self.overture = {}) : exports);
 
