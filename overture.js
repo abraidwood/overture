@@ -28,7 +28,12 @@
 //
 // [ghbt]: https://github.com/marijnh/acorn/issues
 
-(function(exports) {
+(function(mod) {
+  if (typeof exports == "object" && typeof module == "object") return mod(exports); // CommonJS
+  if (typeof define == "function" && define.amd) return define(["exports"], mod); // AMD
+  mod(self.overture || (self.overture = {})); // Plain browser env
+})(function(exports) {
+
     "use strict";
 
     exports.version = "0.1";
@@ -1651,7 +1656,7 @@
 
             if (isIdentifierChar(ch)) {
                 ++tokPos;
-            } else if (ch === 92) { // "\"
+            } else if (ch === 92) {
                 return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
             } else {
                 break;
@@ -2336,7 +2341,7 @@
     // Start the precedence parser.
 
     function parseExprOps(noIn) {
-        return parseExprOp(parseMaybeUnary(noIn), _bin_minop, noIn);
+        return parseExprOp(parseMaybeUnary(), _bin_minop, noIn);
     }
 
     // Parse binary operators with the operator precedence parsing
@@ -2359,7 +2364,7 @@
             node.left = left;
             node.operator = tokVal;
             next();
-            node.right = parseExprOp(parseMaybeUnary(noIn), curTokType, noIn);
+            node.right = parseExprOp(parseMaybeUnary(), curTokType, noIn);
             return parseExprOp(node, minTokType, noIn);
         }
         return left;
@@ -2367,20 +2372,20 @@
 
     // Parse unary operators, both prefix and postfix.
 
-    function parseMaybeUnary(noIn) {
+    function parseMaybeUnary() {
         var node = null;
         if (tokType.prefix) {
             if(tokType.isUpdate) {
                 node = new UpdateExpression();
                 node.operator = tokVal;
                 next();
-                node.argument = parseMaybeUnary(noIn);
+                node.argument = parseMaybeUnary();
                 checkLVal(node.argument);
             } else {
                 node = new UnaryExpression();
                 node.operator = tokVal;
                 next();
-                node.argument = parseMaybeUnary(noIn);
+                node.argument = parseMaybeUnary();
                 if (strict && node.operator === 'delete' &&
                              node.argument instanceof Identifier)
                 raise(tokPos, "Deleting local variable in strict mode");
@@ -2707,5 +2712,5 @@
         next();
         return node;
     }
-})(typeof exports === 'undefined' ? (self.overture = {}) : exports);
+});
 
