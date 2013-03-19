@@ -882,6 +882,7 @@
 
     // Test whether a given character is part of an identifier.
 
+    // http://jsperf.com/isidentifierchar
     function isIdentifierChar(code) {
         if (code < 48) return code === 36;
         if (code < 58) return true;
@@ -919,6 +920,7 @@
         tokVal = val;
     }
 
+    // http://jsperf.com/skipblockcomment
     function skipBlockComment() {
         tokPos += 2;
         var end = input.indexOf("*/", tokPos);
@@ -926,6 +928,7 @@
         tokPos = end + 2;
     }
 
+    // http://jsperf.com/skiplinecomment
     function skipLineComment() {
         tokPos += 2;
         var ch = input.charCodeAt(tokPos);
@@ -936,13 +939,13 @@
     }
 
     // Called at the start of the parse and after every token. Skips
-    // whitespace and comments, and.
+    // whitespace and comments.
+    // http://jsperf.com/skipspace
 
     function skipSpace() {
         var ch = 0;
         while (tokPos < inputLen) {
             ch = input.charCodeAt(tokPos);
-
             switch(ch) {
                 case 32: ++tokPos; break;
                 case 9: ++tokPos; break;
@@ -1410,6 +1413,7 @@
     }
 
     // Read an integer, octal integer, or floating-point number.
+    // http://jsperf.com/readnumber
 
     function readNumber(code) {
         var startCode = code;
@@ -1418,7 +1422,10 @@
         var prev = -1;
 
         while(tokPos < inputLen) {
-            if(code === 46) { // '.'
+            if (code >= 48 && code <= 55) {
+            } else if (code === 56 || code === 57) { // 89
+                flags |= 4;
+            } else if(code === 46) { // '.'
                 if((flags & 1) !== 0) {
                     break;
                 } else {
@@ -1442,8 +1449,6 @@
                     raise(tokPos, "Identifier directly after number");
                 }
                 break;
-            } else if (code === 56 || code === 57) { // 89
-                flags |= 4;
             } else if (code < 48 || code > 57) { // 0-9
                 break;
             }
