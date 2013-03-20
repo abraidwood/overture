@@ -1386,26 +1386,31 @@
         return finishToken(_regexp, new RegExp(input.substring(start, tokPos), mods));
     }
 
+    // http://jsperf.com/readhex/2
     function readInt16(len) {
-        var start = tokPos, total = 0;
-        for (var i = 0, e = len == null ? Infinity : len; i < e; ++i) {
-            var code = input.charCodeAt(tokPos), val;
-            if (code >= 48 && code <= 57) val = code - 48; // 0-9
-            else if (code >= 97) val = code - 87;//97 + 10; // a + 10
-            else if (code >= 65) val = code - 55;//65 + 10; // A + 10
-            else break;
-            if (val >= 16) break;
-            ++tokPos;
-            total = total * 16 + val;
-        }
-        if (tokPos === start || len != null && tokPos - start !== len) return null;
+        var start = tokPos;
+        var total = 0;
+        var code = 0;
+        var i=0, len = len || Infinity;
 
+        for(;i<len;i++,tokPos++) {
+            code = input.charCodeAt(tokPos);
+            if (code >= 48 && code <= 57) {
+                total = total * 16 +  code - 48;
+            } else if (code >= 97 && code <= 102) {
+                total = total * 16 + code - 87;
+            } else if (code >= 65 && code <= 90) {
+                total = total * 16 + code - 55;
+            }
+            else break;
+        }
+        if (tokPos === start || len !== Infinity && tokPos - start !== len) return null;
         return total;
     }
 
     function readHexNumber() {
         tokPos += 2; // 0x
-        var val = readInt16();
+        var val = readInt16(0);
         if (val === null) raise(tokStart + 2, "Expected hexadecimal number");
         if (isIdentifierStart(input.charCodeAt(tokPos))) raise(tokPos, "Identifier directly after number");
         tokRegexpAllowed = false;
@@ -1502,6 +1507,7 @@
 
     var rs_str = [];
 
+    // http://jsperf.com/readstring
     function readString_Esc() {
         var ch = input.charCodeAt(++tokPos);
         ++tokPos;
@@ -1597,10 +1603,30 @@
     // Only builds up the word character-by-character when it actually
     // containeds an escape, as a micro-optimization.
 
+    function readWord_regexpMods() {
+        containsEsc = false;
+        var start = tokPos, ch = input.charCodeAt(tokPos);
+        if (isIdentifierStart(ch)) {
+            ++tokPos;
+        } else if (ch === 92) {
+            return readWord_Esc(input.substring(start, tokPos), isIdentifierStart);
+        }
+
+        for (;tokPos<inputLen;) {
+            ch = input.charCodeAt(tokPos);
+            if (isIdentifierChar(ch)) ++tokPos;
+            else if (ch === 92)
+                return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
+            else break;
+        }
+        return input.substring(start, tokPos);
+    }
+
+    // http://jsperf.com/readword
     function readWord_Esc(word, identifierFn) {
         containsEsc = true;
 
-        for (;;) {
+        for (;tokPos<inputLen;) {
             var ch = input.charCodeAt(tokPos);
             if (isIdentifierChar(ch)) {
                 word += input.charAt(tokPos);
@@ -1625,47 +1651,16 @@
         return word;
     }
 
-    function readWord_regexpMods() {
-        containsEsc = false;
-        var start = tokPos;
-
-        var ch = input.charCodeAt(tokPos);
-        if (isIdentifierStart(ch)) {
-            ++tokPos;
-        } else if (ch === 92) {
-            return readWord_Esc(input.substring(start, tokPos), isIdentifierStart);
-        }
-
-        for (;;) {
-            ch = input.charCodeAt(tokPos);
-
-            if (isIdentifierChar(ch)) {
-                ++tokPos;
-            } else if (ch === 92) {
-                return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
-            } else {
-                break;
-            }
-        }
-        return input.substring(start, tokPos);
-    }
-
+    // http://jsperf.com/readword
     function readWord_n() {
-        var start = tokPos;
-        var ch = 0;
-
+        var start = tokPos, ch = 0;
         ++tokPos;
-
-        for (;;) {
+        for (;tokPos<inputLen;) {
             ch = input.charCodeAt(tokPos);
-
-            if (isIdentifierChar(ch)) {
-                ++tokPos;
-            } else if (ch === 92) {
+            if (isIdentifierChar(ch)) ++tokPos;
+            else if (ch === 92)
                 return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
-            } else {
-                break;
-            }
+            else break;
         }
         return input.substring(start, tokPos);
     }
