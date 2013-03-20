@@ -1468,7 +1468,7 @@
         if((flags & 1) !== 0) {
             code = parseFloat(input.substring(start, tokPos));
         } else if(startCode !== 48 || (tokPos - start) === 1) {
-            code = input.substring(start, tokPos) | 0; // this is what parseInt(...,10) does
+            code = parseFloat(input.substring(start, tokPos)) | 0;
         } else if (strict || (flags & 4) !== 0) {
             raise(start, "Invalid number");
         } else {
