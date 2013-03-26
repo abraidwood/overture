@@ -43,6 +43,8 @@ numbers.</p>
     // threejs51
   ];
 
+  var runProfile = /[?&]profile(&|$)/.test(document.location.search);
+
   function runOverture(code, locations) {
     overture.parse(code, {locations: locations});
   }
@@ -64,6 +66,7 @@ numbers.</p>
       runner(testStrings[i], locations);
     }
     var t0 = +new Date, t1, lines = 0;
+    if(runProfile) {console.profile();}
     for (;;) {
       for(i=0;i<testStrings.length;i++) {
         runner(testStrings[i], locations);
@@ -72,6 +75,7 @@ numbers.</p>
       t1 = +new Date;
       if (t1 - t0 > 2000) break;
     }
+    if(runProfile) {console.profileEnd();}
     return lines / ((t1 - t0) / 1000);
   }
 
