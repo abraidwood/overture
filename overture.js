@@ -55,7 +55,7 @@
             options[opt] = defaultOptions[opt];
         sourceFile = options.sourceFile || null;
 
-        if(options.forbidReserved) readWord = readWord_checkReserved;
+        if (options.forbidReserved) readWord = readWord_checkReserved;
 
         return parseTopLevel(options.program);
     };
@@ -841,7 +841,7 @@
                     case "finally": return _finally;
                 }
                 return type;
-            case 10: if(str === "instanceof") return _instanceof;
+            case 10: if (str === "instanceof") return _instanceof;
             default: return type;
         }
     };
@@ -882,7 +882,7 @@
 
     // Test whether a given character is part of an identifier.
 
-    // http://jsperf.com/isidentifierchar
+    // http://jsperf.com/isidentifierchar/3
     function isIdentifierChar(code) {
         if (code < 48) return code === 36;
         if (code < 58) return true;
@@ -961,7 +961,7 @@
                 case 13:
                     ++tokPos;
                     ch = input.charCodeAt(tokPos);
-                    if(ch === 10) {         // -> '\r\n'
+                    if (ch === 10) {         // -> '\r\n'
                         ++tokPos;
                     }
                     break;
@@ -971,7 +971,7 @@
 
                 default:
                     if (ch >= 5760) {
-                        if(ch === 0x1680 ||
+                        if (ch === 0x1680 ||
                             ch === 0x180e ||
                             ch === 0x2028 ||
                             ch === 0x2029 ||
@@ -1173,7 +1173,7 @@
                 finishToken(_bin8, BinaryOperator.zero_fill_right_shift);
             }
         } else {
-        ++tokPos;
+            ++tokPos;
             finishToken(_bin8, BinaryOperator.right_shift);
         }
     }
@@ -1342,7 +1342,7 @@
 
     // Parse a regular expression. Some context-awareness is necessary,
     // since a '/' inside a '[]' set does not end the expression.
-    // http://jsperf.com/readregexp/4
+    // http://jsperf.com/readregexp/5
     function readRegexp() {
         var start = tokPos;
         var flags = 0; // ESCAPED | IN CLASS
@@ -1371,28 +1371,15 @@
         var content = input.substring(start, tokPos);
         ++tokPos;
 
-        // Need to use `readWord_regexpMods` because '\uXXXX' sequences are allowed
-        // here (don't ask).
-        var mods = readWord_regexpMods();
-
-        var i=mods.length-1;
-        for(;i>0;i--) {
-            ch = mods.charCodeAt(i);
-            if(ch !== 103 && ch !== 105 && ch !== 109 && ch !== 115 && ch !== 121) {
-                raise(start, "Invalid regexp flag");
-            }
-        }
         tokRegexpAllowed = false;
 
-        finishToken(_regexp, new RegExp(content, mods))    ;
+        finishToken(_regexp, new RegExp(content, readWord_regexpMods()));
     }
 
-    // http://jsperf.com/readhex/2
+    // http://jsperf.com/readhex/4
     function readInt16(len) {
-        var start = tokPos;
-        var total = 0;
-        var code = 0;
-        var i=0, len = len || Infinity;
+        var start=tokPos, total=0, code=0, i=0;
+        len = len || Infinity;
 
         for(;i<len;i++,tokPos++) {
             code = input.charCodeAt(tokPos);
@@ -1423,8 +1410,7 @@
     }
 
     // Read an integer, octal integer, or floating-point number.
-    // http://jsperf.com/readnumber
-
+    //http://jsperf.com/readnumber/3
     function readNumber(code) {
         var startCode = code;
         var start = tokPos;
@@ -1435,25 +1421,25 @@
             if (code >= 48 && code <= 55) {
             } else if (code === 56 || code === 57) { // 89
                 flags |= 4;
-            } else if(code === 46) { // '.'
-                if((flags & 1) !== 0) {
+            } else if (code === 46) { // '.'
+                if ((flags & 1) !== 0) {
                     break;
                 } else {
                     flags |= 1;
                 }
             } else if (code === 43 || code === 45) { // '+-'
-                if(prev !== 101 && prev !== 69) { // 'eE'
+                if (prev !== 101 && prev !== 69) { // 'eE'
                     break;
                 }
             } else if (code === 101 || code === 69) { // 'eE'
-                if((flags & 2) !== 0) {
+                if ((flags & 2) !== 0) {
                     raise(tokPos, "Identifier directly after number");
                     break;
                 } else {
                     flags |= 3;
                 }
-            } else if(isIdentifierStart(input.charCodeAt(tokPos))) {
-                if((flags & 2) !== 0) {
+            } else if (isIdentifierStart(input.charCodeAt(tokPos))) {
+                if ((flags & 2) !== 0) {
                     raise(start, "Invalid number");
                 } else {
                     raise(tokPos, "Identifier directly after number");
@@ -1466,13 +1452,13 @@
             code = input.charCodeAt(++tokPos);
         }
 
-        if((flags & 3) !== 0 && (prev === 101 || prev === 69 || prev === 43 || prev === 45)) { // 'eE','+-'
+        if ((flags & 3) !== 0 && (prev === 101 || prev === 69 || prev === 43 || prev === 45)) { // 'eE','+-'
             raise(start, "Invalid number");
         }
 
-        if((flags & 1) !== 0) {
+        if ((flags & 1) !== 0) {
             code = parseFloat(input.substring(start, tokPos));
-        } else if(startCode !== 48 || (tokPos - start) === 1) {
+        } else if (startCode !== 48 || (tokPos - start) === 1) {
             code = parseFloat(input.substring(start, tokPos)) | 0;
         } else if (strict || (flags & 4) !== 0) {
             raise(start, "Invalid number");
@@ -1491,19 +1477,19 @@
         var ret = ch - 48;
 
         var ch2 = input.charCodeAt(tokPos);
-        if(ch2 >= 48 && ch2 <= 55) {    // 0-7
+        if (ch2 >= 48 && ch2 <= 55) {    // 0-7
             shift = 1;
             ret = ret * 8 + ch2 - 48;
 
-            if(ch < 52) { // '3' because value must be less than 255 overall -> 377 in octal
+            if (ch < 52) { // '3' because value must be less than 255 overall -> 377 in octal
                 var ch3 = input.charCodeAt(tokPos+1);
-                if(ch3 >= 48 && ch3 <= 55) {    // 0-7
+                if (ch3 >= 48 && ch3 <= 55) {    // 0-7
                     shift = 2;
                     ret = ret * 8 + ch3 - 48;
                 }
             }
         }
-        if(ret !== 0) {
+        if (ret !== 0) {
             if (strict) raise(tokPos - 2, "Octal literal in strict mode");
             tokPos += shift;
         }
@@ -1512,32 +1498,27 @@
 
     var rs_str = [];
 
-    // http://jsperf.com/readstring
+    // http://jsperf.com/readstring/2
     function readString_Esc() {
         var ch = input.charCodeAt(++tokPos);
         ++tokPos;
 
         switch(ch) {
-            case 110: rs_str.push('\n'); break; // 'n' -> '\n'
-            case 114: rs_str.push('\r'); break; // 'r' -> '\r'
-            case 120: rs_str.push(String.fromCharCode(readHexChar(2))); break; // 'x'
-            case 117: rs_str.push(String.fromCharCode(readHexChar(4))); break; // 'u'
-            case 85: rs_str.push(String.fromCharCode(readHexChar(8))); break; // 'U'
-            case 116: rs_str.push('\t'); break; // 't' -> '\t'
-            case 98: rs_str.push('\b'); break; // 'b' -> '\b'
-            case 118: rs_str.push('\u000b'); break; // 'v' -> '\u000b'
-            case 102: rs_str.push('\f'); break; // 'f' -> '\f'
-            case 13: // '\r'
-                if (input.charCodeAt(tokPos) === 10) ++tokPos; // '\r\n'
-            case 10: // ' \n'
-                // if(options.locations) {
-                //     tokLineStart = tokPos;
-                //     ++tokCurLine;
-                // }
+            case 110: rs_str.push('\n'); break;
+            case 114: rs_str.push('\r'); break;
+            case 120: rs_str.push(String.fromCharCode(readHexChar(2))); break;
+            case 117: rs_str.push(String.fromCharCode(readHexChar(4))); break;
+            case 85: rs_str.push(String.fromCharCode(readHexChar(8))); break;
+            case 116: rs_str.push('\t'); break;
+            case 98: rs_str.push('\b'); break;
+            case 118: rs_str.push('\x0b'); break;
+            case 102: rs_str.push('\f'); break;
+            case 13:
+                if (input.charCodeAt(tokPos) === 10) ++tokPos;
+            case 10:
                 break;
-
             default:
-                if(ch >= 48 & ch <= 55) { // 0-7 -> possible octal
+                if (ch >= 48 & ch <= 55) { // 0-7 -> possible octal
                     ch = readOctalLiteral(ch);
                 }
                 rs_str.push(String.fromCharCode(ch));
@@ -1557,10 +1538,10 @@
             ch = input.charCodeAt(tokPos);
 
             if (ch === quote) {
-                if(lastEsc === start) {
+                if (lastEsc === start) {
                     str = input.substring(lastEsc,tokPos);
                 } else {
-                    if(lastEsc !== tokPos) {
+                    if (lastEsc !== tokPos) {
                         rs_str.push(input.substring(lastEsc,tokPos));
                     }
                     str = rs_str.join('');
@@ -1571,7 +1552,7 @@
                 return;
 
             } else if (ch === 92) { // '\'
-                if(lastEsc !== tokPos) {
+                if (lastEsc !== tokPos) {
                     rs_str.push(input.substring(lastEsc,tokPos));
                 }
                 readString_Esc();
@@ -1608,26 +1589,67 @@
     // Only builds up the word character-by-character when it actually
     // containeds an escape, as a micro-optimization.
 
+    // g, \u0067, i, \u0069, m, \u006d, \u006D
     function readWord_regexpMods() {
-        containsEsc = false;
-        var start = tokPos, ch = input.charCodeAt(tokPos);
-        if (isIdentifierStart(ch)) {
-            ++tokPos;
-        } else if (ch === 92) {
-            return readWord_Esc(input.substring(start, tokPos), isIdentifierStart);
-        }
+        var start = tokPos;
+        var ch = input.charCodeAt(tokPos);
+        var flags = 0; // g = 1, i = 2, m = 4
+        var mods = '';
 
         for (;tokPos<inputLen;) {
+            if (ch === 103 && (flags & 1) === 0) {
+                flags |= 1;
+                mods += 'g';
+                tokPos++;
+            } else if (ch === 105 && (flags & 2) === 0) {
+                flags |= 2;
+                mods += 'i';
+                tokPos++;
+            } else if (ch === 109 && (flags & 4) === 0) {
+                flags |= 4;
+                mods += 'm';
+                tokPos++;
+            } else if (ch === 92) { // \u006[79Dd]
+                if (
+                    input.charCodeAt(tokPos+1) === 117 &&
+                    input.charCodeAt(tokPos+2) === 48 &&
+                    input.charCodeAt(tokPos+3) === 48 &&
+                    input.charCodeAt(tokPos+4) === 54
+                    ) {
+                    ch = input.charCodeAt(tokPos+5);
+                    if (ch === 55 && (flags & 1) === 0) {
+                        flags |= 1;
+                        mods += 'g';
+                        tokPos += 6;
+                    } else if (ch === 57 && (flags & 2) === 0) {
+                        flags |= 2;
+                        mods += 'i';
+                        tokPos += 6;
+                    } else if ((ch === 68 || ch === 100) && (flags & 4) === 0) {
+                        flags |= 4;
+                        mods += 'm';
+                        tokPos += 6;
+                    } else {
+                        readHexChar(4);
+                        raise(start, "Invalid regexp flag");
+                    }
+                } else {
+                    readHexChar(4);
+                    raise(start, "Invalid regexp flag");
+                }
+            } else if (isIdentifierChar(ch)) {
+                throw "c";
+                raise(start, "Invalid regexp flag");
+            } else {
+                break;
+            }
             ch = input.charCodeAt(tokPos);
-            if (isIdentifierChar(ch)) ++tokPos;
-            else if (ch === 92)
-                return readWord_Esc(input.substring(start, tokPos), isIdentifierChar);
-            else break;
         }
-        return input.substring(start, tokPos);
+
+        return mods;
     }
 
-    // http://jsperf.com/readword
+    // http://jsperf.com/readword/3
     function readWord_Esc(word, identifierFn) {
         containsEsc = true;
 
@@ -1681,7 +1703,7 @@
         var type = _name;
         if (tokPos - tokStart > 1 && containsEsc === false) {
             type = isKeyword(word, type);
-            if(strict && type === _name && isStrictReservedWord(word)) {
+            if (strict && type === _name && isStrictReservedWord(word)) {
                 raise(tokStart, "The keyword '" + word + "' is reserved");
             }
         }
@@ -1696,7 +1718,7 @@
         var type = _name;
         if (word.length > 1 && containsEsc === false) {
             type = isKeyword(word, type);
-            if(type === _name) {
+            if (type === _name) {
                 if ((options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(word))
                     raise(tokStart, "The keyword '" + word + "' is reserved");
                 else if (strict && isStrictReservedWord(word))
@@ -1775,7 +1797,7 @@
     }
 
     function not_semicolon() {
-        if(tokType === _semi) {
+        if (tokType === _semi) {
             next();
             return false;
         } else {
@@ -1834,7 +1856,7 @@
         readToken();
 
         var node = program || new Program();
-        if(tokType !== _eof) {
+        if (tokType !== _eof) {
                 var stmt = parseStatement();
                 node.body.push(stmt);
                 if (isUseStrict(stmt)) setStrict(true);
@@ -1968,7 +1990,7 @@
     function parse_Function() {
         var node = new FunctionDeclaration();
         next();
-        if(tokType !== _name) unexpected();
+        if (tokType !== _name) unexpected();
         return parseFunction(node);
     }
 
@@ -1977,7 +1999,7 @@
         next();
         node.test = parseParenExpression();
         node.consequent = parseStatement();
-        if(eat(_else) === true) {
+        if (eat(_else) === true) {
             node.alternate = parseStatement();
         }
         return node;
@@ -2071,7 +2093,7 @@
             node.handler = clause;
         }
 
-        if(eat(_finally) === true) {
+        if (eat(_finally) === true) {
             node.finalizer = parse_BlockStatement();
         }
 
@@ -2158,7 +2180,7 @@
     }
 
     function parseStatement_default() {
-        if(tokType === _name) {
+        if (tokType === _name) {
             return parse_maybeLabeledStatement();
         } else {
             return parse_ExpressionStatement();
@@ -2215,7 +2237,7 @@
     function parse_BlockStatement() {
         var node = new BlockStatement(), strict = false, oldStrict;
         expect(_braceL);
-        if(eat(_braceR) === false) {
+        if (eat(_braceR) === false) {
             for(;;) {
                 var stmt = parseStatement();
                 node.body.push(stmt);
@@ -2223,7 +2245,7 @@
                     oldStrict = strict;
                     setStrict(strict = true);
                 }
-                if(eat(_braceR) === true) {break;}
+                if (eat(_braceR) === true) {break;}
             }
         }
         if (strict && !oldStrict) setStrict(false);
@@ -2266,7 +2288,7 @@
             decl.id = parse_Identifier();
             if (strict && isStrictBadIdWord(decl.id.name))
                 raise(tokPos, "Binding " + decl.id.name + " in strict mode");
-            if(eat(_eq) === true) {
+            if (eat(_eq) === true) {
                 decl.init = parseExpression_noComma(noIn);
             }
             node.declarations.push(decl);
@@ -2361,7 +2383,7 @@
 
         if (curTokType.binop !== 0 && curTokType.binop > minTokType.binop && (!noIn || tokType !== _in)) {
 
-            if(tokVal === LogicalOperator.AND || tokVal === LogicalOperator.OR) {
+            if (tokVal === LogicalOperator.AND || tokVal === LogicalOperator.OR) {
                 node = new LogicalExpression();
             } else {
                 node = new BinaryExpression();
@@ -2380,7 +2402,7 @@
     function parseMaybeUnary() {
         var node = null;
         if (tokType.prefix) {
-            if(tokType.isUpdate) {
+            if (tokType.isUpdate) {
                 node = new UpdateExpression();
                 node.operator = tokVal;
                 next();
@@ -2604,11 +2626,11 @@
 
                 node.properties.push(prop);
 
-                if(eat(_braceR) === true) break;
+                if (eat(_braceR) === true) break;
 
                 expect(_comma);
 
-                if(options.allowTrailingCommas && eat(_braceR) === true) break;
+                if (options.allowTrailingCommas && eat(_braceR) === true) break;
             }
         }
         return node;
@@ -2628,10 +2650,10 @@
 
         expect(_parenL);
 
-        if(eat(_parenR) === false) {
+        if (eat(_parenR) === false) {
             for(;;) {
                 node.params.push(parse_Identifier());
-                if(eat(_parenR) === true) {break;}
+                if (eat(_parenR) === true) {break;}
                 expect(_comma);
             }
         }
@@ -2666,7 +2688,7 @@
     // for array literals).
 
     function parse_ArrayExpressionList(list) {
-        if(eat(_bracketR) === false) {
+        if (eat(_bracketR) === false) {
             for(;;) {
                 if (tokType === _comma) {
                     list.push(null);
@@ -2674,7 +2696,7 @@
                     list.push(parseExpression_noComma(false));
                 }
 
-                if(eat(_bracketR) === true) return;
+                if (eat(_bracketR) === true) return;
 
                 expect(_comma);
 
@@ -2684,10 +2706,10 @@
     }
 
     function parse_ExpressionList(list) {
-        if(eat(_parenR) === false) {
+        if (eat(_parenR) === false) {
             for(;;) {
                 list.push(parseExpression_noComma(false));
-                if(eat(_parenR) === true) {
+                if (eat(_parenR) === true) {
                     return;
                 } else {
                     expect(_comma);
@@ -2709,7 +2731,7 @@
 
     function parse_Identifier() {
         var node = new Identifier();
-        if(tokType === _name) {
+        if (tokType === _name) {
             node.name = tokVal;
         } else {
             unexpected();
