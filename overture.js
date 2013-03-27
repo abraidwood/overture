@@ -1931,7 +1931,6 @@
         var node = new DebuggerStatement();
         next();
         semicolon();
-//        node.type = "DebuggerStatement";
         return node;
     }
 
@@ -1944,7 +1943,6 @@
         expect(_while);
         node.test = parseParenExpression();
         semicolon();
-        //node.type = "DoWhileStatement";
         return node
     }
 
@@ -1962,8 +1960,9 @@
         next();
         labels.push(loopLabel);
         expect(_parenL);
-        if (tokType === _semi) return parse_ForStatement();
-        if (tokType === _var) {
+        if (tokType === _semi) {
+            node = parse_ForStatement();
+        } else if (tokType === _var) {
             next();
             init = parseVar(true);
             if (init.declarations.length === 1 && eat(_in) === true) {
@@ -1973,17 +1972,18 @@
                 node = parse_ForStatement();
                 node.init = init;
             }
-            return node;
-        }
-        init = parseExpression(true);
-        if (eat(_in) === true) {
-            checkLVal(init);
-            node = parse_ForInStatement();
-            node.left = init;
         } else {
-            node = parse_ForStatement();
-            node.init = init;
+            init = parseExpression(true);
+            if (eat(_in) === true) {
+                checkLVal(init);
+                node = parse_ForInStatement();
+                node.left = init;
+            } else {
+                node = parse_ForStatement();
+                node.init = init;
+            }
         }
+        labels.pop();
         return node;
     }
 
@@ -2040,7 +2040,8 @@
                 break;
 
             } else if (tokType === _case) {
-                node.cases.push(cur = new SwitchCase());
+                cur = new SwitchCase()
+                node.cases.push(cur);
                 next();
                 cur.test = parseExpression(false);
                 expect(_colon);
@@ -2050,7 +2051,8 @@
                     raise(lastStart, "Multiple default clauses");
                 } else {
                     sawDefault = true;
-                    node.cases.push(cur = new SwitchCase());
+                    cur = new SwitchCase();
+                    node.cases.push(cur);
                     next();
                     expect(_colon);
                 }
@@ -2264,7 +2266,6 @@
         if (tokType !== _parenR) node.update = parseExpression(false);
         expect(_parenR);
         node.body = parseStatement();
-        labels.pop();
         return node;
     }
 
@@ -2275,7 +2276,6 @@
         node.right = parseExpression(false);
         expect(_parenR);
         node.body = parseStatement();
-        labels.pop();
         return node;
     }
 
