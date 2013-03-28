@@ -2289,7 +2289,7 @@
             if (strict && isStrictBadIdWord(decl.id.name))
                 raise(tokPos, "Binding " + decl.id.name + " in strict mode");
             if (eat(_eq) === true) {
-                decl.init = parseExpression_noComma(noIn);
+                decl.init = parseMaybeAssign(noIn);
             }
             node.declarations.push(decl);
             if (eat(_comma) === false) break;
@@ -2308,17 +2308,6 @@
     // Parse a full expression. The arguments are used to forbid comma
     // sequences (in argument lists, array literals, or object literals)
     // or the `in` operator (in for loops initalization expressions).
-
-
-    function parseExpression_noComma(noIn) {
-        return parseMaybeAssign(noIn);
-        // if (!noComma && tokType === _comma) {
-        //     var node = new SequenceExpression();
-        //     node.expressions.push(expr);
-        //     while (eat(_comma)) node.expressions.push(parseMaybeAssign(noIn));
-        //     return node;
-        // }
-    }
 
     function parseExpression(noIn) {
         var expr = parseMaybeAssign(noIn);
@@ -2357,9 +2346,9 @@
         if (eat(_question) === true) {
             var node = new ConditionalExpression();
             node.test = expr;
-            node.consequent = parseExpression_noComma(false);
+            node.consequent = parseMaybeAssign(false);
             expect(_colon);
-            node.alternate = parseExpression_noComma(noIn);
+            node.alternate = parseMaybeAssign(noIn);
             return node;
         }
         return expr;
@@ -2578,58 +2567,59 @@
 
     // Parse an object literal.
 
+    function parseGetterOrSetter(prop) {
+        if (options.ecmaVersion >= 5 && prop.key instanceof Identifier) {
+            if (prop.key.name === "get") {
+                prop.kind = PropertyKinds.get;
+                prop.key = parsePropertyName();
+                if (tokType !== _parenL) unexpected();
+                prop.value = parseFunction(new FunctionExpression());
+            } else if (prop.key.name === "set") {
+                prop.kind = PropertyKinds.set;
+                prop.key = parsePropertyName();
+                if (tokType !== _parenL) unexpected();
+                prop.value = parseFunction(new FunctionExpression());
+            } else unexpected();
+        } else unexpected();
+    }
+
+    // getters and setters are not allowed to clash — either with
+    // each other or with an init property — and in strict mode,
+    // init properties are also not allowed to be repeated.
+
     function parse_ObjectExpression() {
         var node = new ObjectExpression();
-        var flags = 0; // SAW A GET/SET | IS A GET/SET
         next();
 
         if (eat(_braceR) === false) {
             for(;;) {
                 var prop = new ObjectExpressionProp();
                 prop.key = parsePropertyName();
-                flags &= 2;
+
                 if (eat(_colon) === true) {
-                    prop.value = parseExpression_noComma(false);
+                    prop.value = parseMaybeAssign(false);
                     prop.kind = PropertyKinds.init;
-                } else if (options.ecmaVersion >= 5 && prop.key instanceof Identifier) {
-                    if (prop.key.name === "get") {
-                        flags = 3;
-                        prop.kind = PropertyKinds.get;
-                        prop.key = parsePropertyName();
-                        if (tokType !== _parenL) unexpected();
-                        prop.value = parseFunction(new FunctionExpression());
-                    } else if (prop.key.name === "set") {
-                        flags = 3;
-                        prop.kind = PropertyKinds.set;
-                        prop.key = parsePropertyName();
-                        if (tokType !== _parenL) unexpected();
-                        prop.value = parseFunction(new FunctionExpression());
-                    } else unexpected();
-                } else unexpected();
+                } else {
+                    parseGetterOrSetter(prop);
+                }
 
-                // getters and setters are not allowed to clash — either with
-                // each other or with an init property — and in strict mode,
-                // init properties are also not allowed to be repeated.
-
-                if (prop.key instanceof Identifier && (strict || (flags & 2) !== 0)) {
+                if (prop.key instanceof Identifier) {
                     for (var i = 0, leni = node.properties.length; i < leni; ++i) {
                         var other = node.properties[i];
-                        if (other.key.name === prop.key.name) {
-                            var conflict = prop.kind == other.kind ||
-                                                         flags & 1 && other.kind === PropertyKinds.init ||
-                                                         prop.kind === PropertyKinds.init && (other.kind === PropertyKinds.get || other.kind === PropertyKinds.set);
-                            if (conflict && !strict && prop.kind === PropertyKinds.init && other.kind === PropertyKinds.init) conflict = false;
-                            if (conflict) raise(tokPos, "Redefinition of property");
+                        if (other.key instanceof Identifier && other.key.name === prop.key.name) {
+                            if(prop.kind === other.kind) {
+                                if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                            } else if (other.kind === PropertyKinds.init) {
+                                if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                            } else if (prop.kind === PropertyKinds.init) {
+                                if(strict || other.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                            }
                         }
                     }
                 }
-
                 node.properties.push(prop);
-
                 if (eat(_braceR) === true) break;
-
                 expect(_comma);
-
                 if (options.allowTrailingCommas && eat(_braceR) === true) break;
             }
         }
@@ -2693,7 +2683,7 @@
                 if (tokType === _comma) {
                     list.push(null);
                 } else {
-                    list.push(parseExpression_noComma(false));
+                    list.push(parseMaybeAssign(false));
                 }
 
                 if (eat(_bracketR) === true) return;
@@ -2708,7 +2698,7 @@
     function parse_ExpressionList(list) {
         if (eat(_parenR) === false) {
             for(;;) {
-                list.push(parseExpression_noComma(false));
+                list.push(parseMaybeAssign(false));
                 if (eat(_parenR) === true) {
                     return;
                 } else {
