@@ -1787,11 +1787,6 @@
 
     // Test whether a semicolon can be inserted at the current position.
 
-    function canInsertSemicolon() {
-        return !options.strictSemicolons &&
-            (tokType === _eof || tokType === _braceR || newline.test(input.substring(lastEnd, tokStart)));
-    }
-
     function cannotInsertSemicolon() {
         return tokType !== _eof && tokType !== _braceR && !newline.test(input.substring(lastEnd, tokStart));
     }
@@ -2567,6 +2562,18 @@
 
     // Parse an object literal.
 
+    function parsePropertyName() {
+        if (tokType === _string || tokType === _num) {
+            return parseExprAtom();
+        } else {
+            return parse_Identifier_liberal();
+        }
+    }
+
+    // getters and setters are not allowed to clash — either with
+    // each other or with an init property — and in strict mode,
+    // init properties are also not allowed to be repeated.
+
     function parseGetterOrSetter(prop) {
         if (options.ecmaVersion >= 5 && prop.key instanceof Identifier) {
             if (prop.key.name === "get") {
@@ -2583,9 +2590,27 @@
         } else unexpected();
     }
 
-    // getters and setters are not allowed to clash — either with
-    // each other or with an init property — and in strict mode,
-    // init properties are also not allowed to be repeated.
+    function validateObjectProperties(props) {
+        var prop, other, i=0, j=0, len = props.length;
+
+        for(;j<len;j++) {
+            prop = props[j];
+            if (prop.key instanceof Identifier) {
+                for (i=j+1;i<len;i++) {
+                    other = props[i];
+                    if (other.key instanceof Identifier && other.key.name === prop.key.name) {
+                        if(prop.kind === other.kind) {
+                            if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                        } else if (other.kind === PropertyKinds.init) {
+                            if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                        } else if (prop.kind === PropertyKinds.init) {
+                            if(strict || other.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
+                        }
+                    }
+                }
+            }
+        }
+    }
 
     function parse_ObjectExpression() {
         var node = new ObjectExpression();
@@ -2603,35 +2628,14 @@
                     parseGetterOrSetter(prop);
                 }
 
-                if (prop.key instanceof Identifier) {
-                    for (var i = 0, leni = node.properties.length; i < leni; ++i) {
-                        var other = node.properties[i];
-                        if (other.key instanceof Identifier && other.key.name === prop.key.name) {
-                            if(prop.kind === other.kind) {
-                                if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
-                            } else if (other.kind === PropertyKinds.init) {
-                                if(strict || prop.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
-                            } else if (prop.kind === PropertyKinds.init) {
-                                if(strict || other.kind !== PropertyKinds.init) raise(tokPos, "Redefinition of property");
-                            }
-                        }
-                    }
-                }
                 node.properties.push(prop);
                 if (eat(_braceR) === true) break;
                 expect(_comma);
                 if (options.allowTrailingCommas && eat(_braceR) === true) break;
             }
         }
+        validateObjectProperties(node.properties);
         return node;
-    }
-
-    function parsePropertyName() {
-        if (tokType === _string || tokType === _num) {
-            return parseExprAtom();
-        } else {
-            return parse_Identifier_liberal();
-        }
     }
 
     // Parse a function declaration or literal
