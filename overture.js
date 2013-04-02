@@ -940,7 +940,7 @@
 
     // Called at the start of the parse and after every token. Skips
     // whitespace and comments.
-    // http://jsperf.com/skipspace
+    // http://jsperf.com/skipspace/2
 
     function skipSpace() {
         var ch = 0;
@@ -1678,7 +1678,6 @@
         return word;
     }
 
-    // http://jsperf.com/readword
     function readWord_n() {
         var start = tokPos, ch = 0;
         ++tokPos;
@@ -2184,12 +2183,10 @@
         }
     }
 
+    // Most types of statements are recognized by the keyword they
+    // start with. Many are trivial to parse, some require a bit of
+    // complexity.
     function parseStatement() {
-
-        // Most types of statements are recognized by the keyword they
-        // start with. Many are trivial to parse, some require a bit of
-        // complexity.
-
         switch (tokType) {
             case _break: return parse_BreakStatement();
             case _continue: return parse_ContinueStatement();
