@@ -26,17 +26,20 @@
 //
 // Please use the [github bug tracker][ghbt] to report issues.
 //
-// [ghbt]: https://github.com/marijnh/acorn/issues
+
+/* jshint -W053, strict:true, eqeqeq:true, quotmark:single, undef:true, unused:true, trailing:true  */
+/* global  exports, module, define, self */
 
 (function(mod) {
-  if (typeof exports == "object" && typeof module == "object") return mod(exports); // CommonJS
-  if (typeof define == "function" && define.amd) return define(["exports"], mod); // AMD
-  mod(self.overture || (self.overture = {})); // Plain browser env
+    'use strict';
+    if (typeof(exports) === 'object' && typeof(module) === 'object') {return mod(exports);} // CommonJS
+    if (typeof(define) === 'function' && define.amd) {return define(['exports'], mod);} // AMD
+    mod(self.overture || (self.overture = {})); // Plain browser env
 })(function(exports) {
 
-    "use strict";
+    'use strict';
 
-    exports.version = "0.1";
+    exports.version = '0.1';
 
     // The main exported interface (under `self.overture` when in the
     // browser) is a `parse` function that takes a code string and
@@ -49,13 +52,19 @@
     var options, input, inputLen, sourceFile;
 
     exports.parse = function(inpt, opts) {
-        input = String(inpt); inputLen = input.length;
+        input = String(inpt);
+        inputLen = input.length;
         options = opts || {};
-        for (var opt in defaultOptions) if (!options.hasOwnProperty(opt))
-            options[opt] = defaultOptions[opt];
+        for (var opt in defaultOptions) {
+            if (!options.hasOwnProperty(opt)) {
+                options[opt] = defaultOptions[opt];
+            }
+        }
         sourceFile = options.sourceFile || null;
 
-        if (options.forbidReserved) readWord = readWord_checkReserved;
+        if (options.forbidReserved) {
+            readWord = readWord_checkReserved;
+        }
 
         return parseTopLevel(options.program);
     };
@@ -126,9 +135,14 @@
             if (match && match.index < offset) {
                 ++line;
                 cur = match.index + match[0].length;
-            } else break;
+            } else {
+                break;
+            }
         }
-        return {line: line, column: offset - cur};
+        return {
+            line: line,
+            column: offset - cur
+        };
     };
 
     // Overture is organized as a tokenizer and a recursive-descent parser.
@@ -186,9 +200,12 @@
     // to the end of the error message, and then raises a `SyntaxError`
     // with that message.
 
-    function raise(pos, message) {pos = pos || tokPos;
-        if (typeof pos == "number") pos = getLineInfo(input, pos);
-        message += " (" + pos.line + ":" + pos.column + ")";
+    function raise(pos, message) {
+        pos = pos || tokPos;
+        if (typeof(pos) === 'number') {
+            pos = getLineInfo(input, pos);
+        }
+        message += ' (' + pos.line + ':' + pos.column + ')';
         throw new SyntaxError(message);
     }
 
@@ -205,7 +222,7 @@
     // make them recognizeable when debugging.
 
     function Node(type) {
-        this.type = type;
+        this.type = type || null;
     }
 
     function Label(name) { // utility, not spidermonkey
@@ -213,15 +230,13 @@
         this.kind = null;
     }
 
-    function Node() {
-        this.type = null;
-    };
-
     function SourceLocation() {
         this.start = tokStartLoc;
         this.end = null;
-        if (sourceFile !== null) this.source = sourceFile;
-    };
+        if (sourceFile !== null) {
+            this.source = sourceFile;
+        }
+    }
 
     function Identifier() {
         this.type = 'Identifier';
@@ -481,7 +496,7 @@
         this.expression = false;
     }
 
-    var PropertyKinds = {
+    var PropertyKind = {
         'init': new String('init'),
         'get': new String('get'),
         'set': new String('set')
@@ -552,18 +567,11 @@
         'const': new String('const')
     };
 
-    var PropertyKind = {
-        'init': new String('init'),
-        'get': new String('get'),
-        'set': new String('set')
-    };
-
-
     var _num = new Node('num'),
         _regexp = new Node('regexp'),
         _string = new Node('string'),
         _name = new Node('name'),
-        _eof = new binop_t(0);
+        _eof = new Binop(0);
 
     // Keyword tokens. The `keyword` property (also used in keyword-like
     // operators) indicates that the token originated from an
@@ -578,80 +586,81 @@
     // to know when parsing a label, in order to allow or disallow
     // continue jumps to that label.
 
-    function keyword_t(word) {
+    function Keyword(word) {
         this.keyword = new String(word);
         this.isLoop = false;
     }
-    function binop_t(n) {
+    function Binop(n) {
         this.binop = n;
     }
-    function binop_pp_t(n) {
+    function PrePostBinop(n) {
         this.binop = n;
         this.isAssign = false;
         this.prefix = false;
         this.postfix = false;
         this.isUpdate = false;
     }
-    function prefix_t() {
+    function PrefixType() {
         this.beforeExpr = false;
         this.binop = 0;
-        this.prefix = false;
+        this.prefix = true;
     }
 
-    var _break = new keyword_t('break');
-    var _case = new keyword_t('case');
-    var _catch = new keyword_t('catch');
-    var _continue = new keyword_t('continue');
-    var _debugger = new keyword_t('debugger');
-    var _default = new keyword_t('default');
-    var _do = new keyword_t('do'); _do.isLoop = true;
-    var _else = new keyword_t('else');
-    var _finally = new keyword_t('finally');
-    var _for = new keyword_t('for'); _for.isLoop = true;
-    var _function = new keyword_t('function');
-    var _if = new keyword_t('if');
-    var _return = new keyword_t('return');
-    var _switch = new keyword_t('switch');
-    var _throw = new keyword_t('throw');
-    var _try = new keyword_t('try');
-    var _var = new keyword_t('var');
-    var _while = new keyword_t('while'); _while.isLoop = true;
-    var _with = new keyword_t('with');
-    var _new = new keyword_t('new');
-    var _this = new keyword_t('this');
+    var _break = new Keyword('break');
+    var _case = new Keyword('case');
+    var _catch = new Keyword('catch');
+    var _continue = new Keyword('continue');
+    var _debugger = new Keyword('debugger');
+    var _default = new Keyword('default');
+    var _do = new Keyword('do');
+    var _else = new Keyword('else');
+    var _false = new Keyword('false');
+    var _finally = new Keyword('finally');
+    var _for = new Keyword('for');
+    var _function = new Keyword('function');
+    var _if = new Keyword('if');
+    var _new = new Keyword('new');
+    var _null = new Keyword('null');
+    var _return = new Keyword('return');
+    var _switch = new Keyword('switch');
+    var _this = new Keyword('this');
+    var _throw = new Keyword('throw');
+    var _true = new Keyword('true');
+    var _try = new Keyword('try');
+    var _var = new Keyword('var');
+    var _while = new Keyword('while');
+    var _with = new Keyword('with');
 
-    // The keywords that denote values.
+    _do.isLoop = true;
+    _for.isLoop = true;
+    _while.isLoop = true;
 
-    var _null = new keyword_t('null');
-    var _true = new keyword_t('true');
-    var _false = new keyword_t('false');
 
     // Some keywords are treated as regular operators. `in` sometimes
     // (when parsing `for`) needs to be tested against specifically, so
     // we assign a variable name to it for quick comparing.
 
-
-    var _in = new binop_t(7);
+    var _in = new Binop(7);
 
     //
-    var _void = new prefix_t(); _void.prefix = true;
-    var _delete = new prefix_t(); _delete.prefix = true;
-    var _typeof = new prefix_t(); _typeof.prefix = true;
-    var _instanceof = new binop_t(7);
+    var _void = new PrefixType();
+    var _delete = new PrefixType();
+    var _typeof = new PrefixType();
+    var _instanceof = new Binop(7);
 
     // Punctuation token types. Again, the `type` property is purely for debugging.
 
-    var _bracketL = new keyword_t('[');
-    var _bracketR = new keyword_t(']');
-    var _braceL = new keyword_t('{');
-    var _braceR = new keyword_t('}');
-    var _parenL = new keyword_t('(');
-    var _parenR = new keyword_t(')');
-    var _comma = new keyword_t(',');
-    var _semi = new keyword_t(';');
-    var _colon = new keyword_t(':');
-    var _dot = new keyword_t('.');
-    var _question = new keyword_t('?');
+    var _bracketL = new Keyword('[');
+    var _bracketR = new Keyword(']');
+    var _braceL = new Keyword('{');
+    var _braceR = new Keyword('}');
+    var _parenL = new Keyword('(');
+    var _parenR = new Keyword(')');
+    var _comma = new Keyword(',');
+    var _semi = new Keyword(';');
+    var _colon = new Keyword(':');
+    var _dot = new Keyword('.');
+    var _question = new Keyword('?');
 
     // Operators. These carry several kinds of properties to help the
     // parser use them properly (the presence of these properties is
@@ -669,23 +678,30 @@
     // binary operators with a very low precedence, that should result
     // in AssignmentExpression nodes.
 
-    var _slash = new binop_pp_t(10);
-    var _eq = new binop_pp_t(0); _eq.isAssign = true;
-    var _assign = new binop_pp_t(0); _assign.isAssign = true;
-    var _plusmin = new binop_pp_t(9); _plusmin.prefix = true;
-    var _incdec = new binop_pp_t(0); _incdec.prefix = true; _incdec.postfix = true; _incdec.isUpdate = true;
-    var _prefix = new binop_pp_t(0); _prefix.prefix = true;
+    var _slash = new PrePostBinop(10);
+    var _eq = new PrePostBinop(0);
+    _eq.isAssign = true;
+    var _assign = new PrePostBinop(0);
+    _assign.isAssign = true;
+    var _plusmin = new PrePostBinop(9);
+    _plusmin.prefix = true;
+    var _incdec = new PrePostBinop(0);
+    _incdec.prefix = true;
+    _incdec.postfix = true;
+    _incdec.isUpdate = true;
+    var _prefix = new PrePostBinop(0);
+    _prefix.prefix = true;
 
-    var _bin_minop = new binop_t(0);
-    var _bin1 = new binop_t(1);
-    var _bin2 = new binop_t(2);
-    var _bin3 = new binop_t(3);
-    var _bin4 = new binop_t(4);
-    var _bin5 = new binop_t(5);
-    var _bin6 = new binop_t(6);
-    var _bin7 = new binop_t(7);
-    var _bin8 = new binop_t(8);
-    var _bin10 = new binop_t(10);
+    var _bin_minop = new Binop(0);
+    var _bin1 = new Binop(1);
+    var _bin2 = new Binop(2);
+    var _bin3 = new Binop(3);
+    var _bin4 = new Binop(4);
+    var _bin5 = new Binop(5);
+    var _bin6 = new Binop(6);
+    var _bin7 = new Binop(7);
+    var _bin8 = new Binop(8);
+    var _bin10 = new Binop(10);
 
     // This is a trick taken from Esprima. It turns out that, on
     // non-Chrome browsers, to check whether a string is in a set, a
@@ -699,28 +715,28 @@
 
     // The ECMAScript 3 reserved word list.
 
-    var isReservedWord3 = function(str) {
+    function isReservedWord3(str) {
         switch (str.length) {
-            case 3:
-                    return str==='int';
-            case 4:
-                return str==='byte'||str==='char'||str==='enum'||str==='goto'||str==='long';
-            case 5:
-                return str==='class'||str==='final'||str==='float'||str==='short'||str==='super';
-            case 6:
-                return str==='double'||str==='export'||str==='import'||str==='native'||str==='public'||str==='static'||str==='throws';
-            case 7:
-                return str==='boolean'||str==='extends'||str==='package'||str==='private';
-            case 8:
-                return str==='abstract'||str==='volatile';
-            case 9:
-                return str==='interface'||str==='protected'||str==='transient';
-            case 10:
-                    return str==='implements';
-            case 12:
-                    return str==='synchronized';
-            default:
-                return false;
+        case 3:
+            return str==='int';
+        case 4:
+            return str==='byte'||str==='char'||str==='enum'||str==='goto'||str==='long';
+        case 5:
+            return str==='class'||str==='final'||str==='float'||str==='short'||str==='super';
+        case 6:
+            return str==='double'||str==='export'||str==='import'||str==='native'||str==='public'||str==='static'||str==='throws';
+        case 7:
+            return str==='boolean'||str==='extends'||str==='package'||str==='private';
+        case 8:
+            return str==='abstract'||str==='volatile';
+        case 9:
+            return str==='interface'||str==='protected'||str==='transient';
+        case 10:
+            return str==='implements';
+        case 12:
+            return str==='synchronized';
+        default:
+            return false;
         }
     }
 
@@ -728,108 +744,110 @@
 
     function isReservedWord5(str) {
         switch (str.length) {
-            case 4:
-                return str === 'enum';
-            case 5:
-                return str === 'class' || str === 'super';
-            case 6:
-                return str === 'export' || str === 'import';
-            case 7:
-                return str === 'extends';
-            default:
-                return false;
+        case 4:
+            return str === 'enum';
+        case 5:
+            return str === 'class' || str === 'super';
+        case 6:
+            return str === 'export' || str === 'import';
+        case 7:
+            return str === 'extends';
+        default:
+            return false;
         }
     }
     // The additional reserved words in strict mode.
 
     function isStrictReservedWord(str) {
         switch (str.length) {
-            case 3:
-                return str === 'let';
-            case 5:
-                return str === 'yield';
-            case 6:
-                return str === 'static' || str === 'public';
-            case 7:
-                return str === 'private' || str === 'package';
-            case 9:
-                return str === 'interface' || str === 'protected';
-            case 10:
-                return str === 'implements';
-            default:
-                return false;
+        case 3:
+            return str === 'let';
+        case 5:
+            return str === 'yield';
+        case 6:
+            return str === 'static' || str === 'public';
+        case 7:
+            return str === 'private' || str === 'package';
+        case 9:
+            return str === 'interface' || str === 'protected';
+        case 10:
+            return str === 'implements';
+        default:
+            return false;
         }
     }
     // The forbidden variable names in strict mode.
 
-    var isStrictBadIdWord = function(str) {
+    function isStrictBadIdWord(str) {
         return str === 'eval' || str === 'arguments';
     }
 
     // And the keywords.
 
-    var isKeyword = function(str, type) {
+    function isKeyword(str, type) {
         switch (tokPos - tokStart) {
-            case 4:
-                switch (str) {
-                    case 'null': return _null;
-                    case 'else': tokRegexpAllowed = false; return _else;
-                    case 'true': return _true;
-                    case 'this': return _this;
-                    case 'case': tokRegexpAllowed = true; return _case;
-                    case 'with': return _with;
-                    case 'void': return _void;
-                }
-                return type;
-            case 5:
-                switch (str) {
-                    case 'false': return _false;
-                    case 'break': return _break;
-                    case 'while': return _while;
-                    case 'catch': return _catch
-                    case 'throw': tokRegexpAllowed = false; return _throw;
-                }
-                return type;
-            case 3:
-                switch (str) {
-                    case 'var': return _var;
-                    case 'for': return _for;
-                    case 'new': tokRegexpAllowed = false; return _new;
-                    case 'try': return _try;
-                }
-                return type;
-            case 6:
-                switch (str) {
-                    case 'return': tokRegexpAllowed = true; return _return;
-                    case 'switch': return _switch;
-                    case 'typeof': return _typeof;
-                    case 'delete': return _delete;
-                }
-                return type;
-            case 8:
-                switch (str) {
-                    case 'function': return _function;
-                    case 'continue': return _continue;
-                    case 'debugger': return _debugger;
-                }
-                return type;
-            case 2:
-                switch (str) {
-                    case 'if': return _if;
-                    case 'in': tokRegexpAllowed = true; return _in;
-                    case 'do': return _do;
-                }
-                return type;
-            case 7:
-                switch (str) {
-                    case 'default': return _default;
-                    case 'finally': return _finally;
-                }
-                return type;
-            case 10: if (str === 'instanceof') return _instanceof;
-            default: return type;
+        case 4:
+            switch (str) {
+            case 'null': return _null;
+            case 'true': return _true;
+            case 'this': return _this;
+            case 'with': return _with;
+            case 'void': return _void;
+            case 'else': tokRegexpAllowed = false; return _else;
+            case 'case': tokRegexpAllowed = true; return _case;
+            }
+            return type;
+        case 5:
+            switch (str) {
+            case 'false': return _false;
+            case 'break': return _break;
+            case 'while': return _while;
+            case 'catch': return _catch;
+            case 'throw': tokRegexpAllowed = false; return _throw;
+            }
+            return type;
+        case 3:
+            switch (str) {
+            case 'var': return _var;
+            case 'for': return _for;
+            case 'try': return _try;
+            case 'new': tokRegexpAllowed = false; return _new;
+            }
+            return type;
+        case 6:
+            switch (str) {
+            case 'switch': return _switch;
+            case 'typeof': return _typeof;
+            case 'delete': return _delete;
+            case 'return': tokRegexpAllowed = true; return _return;
+            }
+            return type;
+        case 8:
+            switch (str) {
+            case 'function': return _function;
+            case 'continue': return _continue;
+            case 'debugger': return _debugger;
+            }
+            return type;
+        case 2:
+            switch (str) {
+            case 'if': return _if;
+            case 'do': return _do;
+            case 'in': tokRegexpAllowed = true; return _in;
+            }
+            return type;
+        case 7:
+            switch (str) {
+            case 'default': return _default;
+            case 'finally': return _finally;
+            }
+            return type;
+        case 10:
+            if (str === 'instanceof') {return _instanceof;}
+            return type;
+        default: return type;
         }
-    };
+    }
 
     // ## Character categories
 
@@ -857,7 +875,7 @@
     var isIdentifierStart = new Array(65536);
     var isIdentifierChar = new Array(65536);
 
-    var isIdentifierStart_fn = function(code) {
+    function isIdentifierStart_fn(code) {
         if (code < 65) return code === 36;
         if (code < 91) return true;
         if (code < 97) return code === 95;
@@ -868,14 +886,10 @@
         return false;
     }
 
-    for(var ix=0;ix<65536;ix++) {
-        isIdentifierStart[ix] = isIdentifierStart_fn(ix);
-    }
-
     // Test whether a given character is part of an identifier.
 
     // http://jsperf.com/isidentifierchar/3
-    var isIdentifierChar_fn = function(code) {
+    function isIdentifierChar_fn(code) {
         if (code < 48) return code === 36;
         if (code < 58) return true;
         if (code < 65) return false;
@@ -888,9 +902,13 @@
         return false;
     }
 
-    for(var ix=0;ix<65536;ix++) {
-        isIdentifierChar[ix] = isIdentifierChar_fn(ix);
+    function setupIdentCharLUTs() {
+        for(var ix=0;ix<65536;ix++) {
+            isIdentifierStart[ix] = isIdentifierStart_fn(ix);
+            isIdentifierChar[ix] = isIdentifierChar_fn(ix);
+        }
     }
+    setupIdentCharLUTs();
 
     // ## Tokenizer
 
@@ -1240,7 +1258,7 @@
         } else if (nonASCIIidentifierStart.test(ch)) {
             readWord();
         } else {
-            raise(tokPos, "Unexpected character '" + ch + "'");
+            raise(tokPos, 'Unexpected character \'' + ch + '\'');
         }
 
     }
@@ -1502,6 +1520,7 @@
             case 102: rs_str.push('\f'); break;
             case 13:
                 if (input.charCodeAt(tokPos) === 10) ++tokPos;
+                break;
             case 10:
                 break;
             default:
@@ -1689,7 +1708,7 @@
         if (tokPos - tokStart > 1 && containsEsc === false) {
             type = isKeyword(word, type);
             if (strict && type === _name && isStrictReservedWord(word)) {
-                raise(tokStart, "The keyword '" + word + "' is reserved");
+                raise(tokStart, 'The keyword \'' + word + '\' is reserved');
             }
         }
         finishToken(type, word);
@@ -1705,9 +1724,9 @@
             type = isKeyword(word, type);
             if (type === _name) {
                 if ((options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(word))
-                    raise(tokStart, "The keyword '" + word + "' is reserved");
+                    raise(tokStart, 'The keyword \'' + word + '\' is reserved');
                 else if (strict && isStrictReservedWord(word))
-                    raise(tokStart, "The keyword '" + word + "' is reserved");
+                    raise(tokStart, 'The keyword \'' + word + '\' is reserved');
             }
         }
         finishToken(type, word);
@@ -1834,13 +1853,14 @@
         readToken();
 
         var node = program || new Program();
+        var stmt = null;
         if (tokType !== _eof) {
-                var stmt = parseStatement();
+                stmt = parseStatement();
                 node.body.push(stmt);
                 if (isUseStrict(stmt)) setStrict(true);
 
                 while(tokType !== _eof) {
-                    var stmt = parseStatement();
+                    stmt = parseStatement();
                     node.body.push(stmt);
                 }
         }
@@ -1921,7 +1941,7 @@
         expect(_while);
         node.test = parseParenExpression();
         semicolon();
-        return node
+        return node;
     }
 
     // Disambiguating between a `for` and a `for`/`in` loop is
@@ -1997,7 +2017,7 @@
             }
             return node;
         } else {
-            raise(tokStart, "'return' outside of function");
+            raise(tokStart, '\'return\' outside of function');
         }
     }
 
@@ -2019,7 +2039,7 @@
                 break;
 
             } else if (tokType === _case) {
-                cur = new SwitchCase()
+                cur = new SwitchCase();
                 node.cases.push(cur);
                 next();
                 cur.test = parseExpression(false);
@@ -2101,7 +2121,7 @@
 
     function parse_WithStatement() {
         var node = new WithStatement();
-        if (strict) raise(tokStart, "'with' in strict mode");
+        if (strict) raise(tokStart, '\'with\' in strict mode');
         next();
         node.object = parseParenExpression();
         node.body = parseStatement();
@@ -2121,12 +2141,12 @@
     // Identifier node, we switch to interpreting it as a label.
 
     function parse_maybeLabeledStatement() {
-        var starttype = tokType, i, node = null;
+        var starttype = tokType, i, leni, node = null;
         var maybeName = tokVal, expr = parseExpression(false);
         if (starttype === _name && expr instanceof Identifier && eat(_colon) === true) {
-            node = new LabeledStatement()
-            for (var i = 0, leni = labels.length; i < leni; ++i)
-                if (labels[i].name === maybeName) raise(tokPos, "Label '" + maybeName + "' is already declared");
+            node = new LabeledStatement();
+            for (i = 0, leni = labels.length; i < leni; ++i)
+                if (labels[i].name === maybeName) raise(tokPos, 'Label \'' +maybeName+ '\' is already declared');
             var label = new Label(maybeName);
             switch(tokType) {
                 case _do:
@@ -2552,13 +2572,13 @@
 
     function parseGetterOrSetter(prop) {
         if (options.ecmaVersion >= 5 && prop.key instanceof Identifier) {
-            if (prop.key.name === "get") {
-                prop.kind = PropertyKinds.get;
+            if (prop.key.name === 'get') {
+                prop.kind = PropertyKind.get;
                 prop.key = parsePropertyName();
                 if (tokType !== _parenL) unexpected();
                 prop.value = parseFunction(new FunctionExpression());
-            } else if (prop.key.name === "set") {
-                prop.kind = PropertyKinds.set;
+            } else if (prop.key.name === 'set') {
+                prop.kind = PropertyKind.set;
                 prop.key = parsePropertyName();
                 if (tokType !== _parenL) unexpected();
                 prop.value = parseFunction(new FunctionExpression());
@@ -2576,9 +2596,9 @@
                     other = props[i];
                     if (other.key instanceof Identifier && other.key.name === prop.key.name) {
                         if (
-                            (prop.kind === other.kind && (strict || prop.kind !== PropertyKinds.init)) ||
-                            (other.kind === PropertyKinds.init && prop.kind !== PropertyKinds.init) ||
-                            (prop.kind === PropertyKinds.init && other.kind !== PropertyKinds.init)
+                            (prop.kind === other.kind && (strict || prop.kind !== PropertyKind.init)) ||
+                            (other.kind === PropertyKind.init && prop.kind !== PropertyKind.init) ||
+                            (prop.kind === PropertyKind.init && other.kind !== PropertyKind.init)
                             ) {
                                 raise(tokPos, 'Redefinition of property');
                             }
@@ -2599,7 +2619,7 @@
 
                 if (eat(_colon) === true) {
                     prop.value = parseMaybeAssign(false);
-                    prop.kind = PropertyKinds.init;
+                    prop.kind = PropertyKind.init;
                 } else {
                     parseGetterOrSetter(prop);
                 }
@@ -2642,7 +2662,7 @@
             for (var i = node.id ? -1 : 0, leni = node.params.length; i < leni; ++i) {
                 var id = i < 0 ? node.id : node.params[i];
                 if (isStrictReservedWord(id.name) || isStrictBadIdWord(id.name))
-                    raise(tokPos, "Defining '" + id.name + "' in strict mode");
+                    raise(tokPos, 'Defining \'' +id.name+ '\' in strict mode');
                 if (i >= 0) for (var j = 0; j < i; ++j) if (id.name === node.params[j].name)
                     raise(tokPos, 'Argument name clash in strict mode');
             }
