@@ -888,7 +888,7 @@
 
     // Test whether a given character is part of an identifier.
 
-    // http://jsperf.com/isidentifierchar/3
+    // http://jsperf.com/isidentifierchar/4
     function isIdentifierChar_fn(code) {
         if (code < 48) return code === 36;
         if (code < 58) return true;
@@ -933,7 +933,7 @@
         skipSpace();
     }
 
-    // http://jsperf.com/skipblockcomment
+    // http://jsperf.com/skipblockcomment/2
     function skipBlockComment() {
         tokPos += 2;
         var end = input.indexOf('*/', tokPos);
@@ -941,7 +941,7 @@
         tokPos = end + 2;
     }
 
-    // http://jsperf.com/skiplinecomment
+    // http://jsperf.com/skiplinecomment/2
     function skipLineComment() {
         tokPos += 2;
         var ch = input.charCodeAt(tokPos);
