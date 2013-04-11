@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Overture benchmark</title>
+    <link rel="stylesheet" href="bench2.css">
+</head>
+<body>
+    <h1>Overture/Acorn/Esprima/ZeParser2 speed comparison</h1>
+
+    <button disabled onclick="runSimpleTests()">Run lines/sec</button>
+    <button disabled onclick="run(true)">Run ms/parse</button>
+    <span id="running"></span>
+
+    <div id="resultsContainer"></div>
+
+    <script src="sources/q.js"></script>
+    <script src="bench2.js"></script>
+</body>
+</html>
