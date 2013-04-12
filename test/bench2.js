@@ -72,14 +72,14 @@ var sources = [
     new Source('codemirror-3.11',true),
     new Source('jquery-1.9.1',true),
     new Source('angular-1.0.6',true),
-    new Source('three-r57',true)
+    new Source('three-r57',true),
 
-    // new Source('q.min',false),
-    // new Source('underscore-1.4.4-min',false),
-    // new Source('backbone-1.0.0-min',false),
-    // new Source('angular-1.0.6.min',false),
-    // new Source('jquery-1.9.1.min',false),
-    // new Source('three-r57.min',false)
+    new Source('q.min',false),
+    new Source('underscore-1.4.4-min',false),
+    new Source('backbone-1.0.0-min',false),
+    new Source('angular-1.0.6.min',false),
+    new Source('jquery-1.9.1.min',false),
+    new Source('three-r57.min',false)
 ];
 
 var runProfile = /[?&]profile(&|$)/.test(document.location.search);
@@ -253,7 +253,9 @@ function runBenchmarkTests() {
                     logger(parserIndex, sourceIndex, (mean * 1000).toFixed(1));
                 }
             });
-            benchmark.run();
+            setTimeout(function() {
+                benchmark.run();
+            }, 127);
         });
     });
     toggleTests(true);
