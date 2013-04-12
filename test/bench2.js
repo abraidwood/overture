@@ -237,11 +237,16 @@ function runBenchmarkTests() {
             }
             var benchmark = new Benchmark(source.name, function() {
                 try {
-                var syntax = this.options.runner(this.options.source, this.options.options);
-                if(syntax && syntax.body && syntax.body.length) {
-                    this.options.resultDump.push(syntax.body.length);
+                    var syntax = this.options.runner(this.options.source, this.options.options);
+                    if(syntax && syntax.body && syntax.body.length) {
+                        this.options.resultDump.push(syntax.body.length);
+                    }
+                } catch(e) {
+                    if(typeof(console) !== 'undefined' && typeof(console.log) !== 'undefined') {
+                        console.log(e.name,e.message);
+                    }
+                    this.abort();
                 }
-                } catch(e) {console.log(e)}
             }, {
                 source: source.text,
                 runner: parser.runner,
@@ -250,7 +255,7 @@ function runBenchmarkTests() {
                 maxTime: 1,
                 onComplete: function() {
                     var mean = this.stats.mean;
-                    logger(parserIndex, sourceIndex, (mean * 1000).toFixed(1));
+                    logger(parserIndex, sourceIndex, this.aborted ? 'crash' : (mean * 1000).toFixed(1));
                 }
             });
             setTimeout(function() {
