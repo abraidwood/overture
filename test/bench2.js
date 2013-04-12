@@ -192,6 +192,8 @@ function showOutput(parserIndex, sourceIndex, data) {
 }
 
 function runSimpleTests() {
+    toggleTests(false);
+
     var parserIndex = 0;
     var sourceIndex = 0;
 
@@ -206,17 +208,17 @@ function runSimpleTests() {
         } catch(e) {
             data = 'crash';
         }
-        showOutput(parserIndex, sourceIndex, data);
+        showOutput(parserIndex, sourceIndex, typeof(data)==='number'?Math.floor(data/1000)+'k':data);
 
-        if(parserIndex < parsers.length) {
-            if(sourceIndex < sources.length - 1) {
-                sourceIndex++;
+        if(sourceIndex < sources.length - 1) {
+            sourceIndex++;
+            setTimeout(next, (parsers[parserIndex].run === true && sources[sourceIndex].run === true)?100:0);
+        } else {
+            sourceIndex = 0;
+            if(++parserIndex < parsers.length) {
                 setTimeout(next, (parsers[parserIndex].run === true && sources[sourceIndex].run === true)?100:0);
             } else {
-                sourceIndex = 0;
-                if(++parserIndex < parsers.length) {
-                    setTimeout(next, (parsers[parserIndex].run === true && sources[sourceIndex].run === true)?100:0);
-                }
+                toggleTests(true);
             }
         }
     }
@@ -224,6 +226,7 @@ function runSimpleTests() {
 }
 
 function runBenchmarkTests() {
+    toggleTests(false);
     var resultDump = [];
     var logger = showOutput;
     parsers.forEach(function(parser, parserIndex) {
@@ -250,21 +253,20 @@ function runBenchmarkTests() {
                     logger(parserIndex, sourceIndex, (mean * 1000).toFixed(1));
                 }
             });
-            setTimeout(function() {
-                benchmark.run();
-            },257);
+            benchmark.run();
         });
     });
+    toggleTests(true);
 }
 
 var testsEnabled = false;
-function enableTests() {
-    testsEnabled = true;
+function toggleTests(on) {
+    testsEnabled = on;
 
     Array.prototype.forEach.call(
         document.getElementsByTagName('button'),
         function(btn) {
-            btn.disabled = false;
+            btn.disabled = !on;
         }
     );
 }
@@ -293,7 +295,7 @@ function drawTable() {
 
 new Q.all(loadParsers(), loadSources()).then(function() {
     drawTable();
-    enableTests();
+    toggleTests(true);
 });
 
 
