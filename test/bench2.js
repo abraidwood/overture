@@ -72,14 +72,14 @@ var sources = [
     new Source('codemirror-3.11',true),
     new Source('jquery-1.9.1',true),
     new Source('angular-1.0.6',true),
-    new Source('three-r57',true),
+    new Source('three-r57',true)
 
-    new Source('q.min',false),
-    new Source('underscore-1.4.4-min',false),
-    new Source('backbone-1.0.0-min',false),
-    new Source('angular-1.0.6.min',false),
-    new Source('jquery-1.9.1.min',false),
-    new Source('three-r57.min',false)
+    // new Source('q.min',false),
+    // new Source('underscore-1.4.4-min',false),
+    // new Source('backbone-1.0.0-min',false),
+    // new Source('angular-1.0.6.min',false),
+    // new Source('jquery-1.9.1.min',false),
+    // new Source('three-r57.min',false)
 ];
 
 var runProfile = /[?&]profile(&|$)/.test(document.location.search);
@@ -183,7 +183,12 @@ function simpleBenchmark(runner, source, options) {
 }
 
 function showOutput(parserIndex, sourceIndex, data) {
-    document.getElementById('cell_'+parserIndex+'_'+sourceIndex).innerHTML = data;
+    var el = document.getElementById('cell_'+parserIndex+'_'+sourceIndex);
+    if (typeof el.innerText === 'string') {
+        el.innerText = data;
+    } else {
+        el.textContent = data;
+    }
 }
 
 function runSimpleTests() {
@@ -218,6 +223,40 @@ function runSimpleTests() {
     setTimeout(next, 50);
 }
 
+function runBenchmarkTests() {
+    var resultDump = [];
+    var logger = showOutput;
+    parsers.forEach(function(parser, parserIndex) {
+        sources.forEach(function(source, sourceIndex) {
+            if(parser.run === false || source.run === false) {
+                logger(parserIndex, sourceIndex, '-');
+                return;
+            }
+            var benchmark = new Benchmark(source.name, function() {
+                try {
+                var syntax = this.options.runner(this.options.source, this.options.options);
+                if(syntax && syntax.body && syntax.body.length) {
+                    this.options.resultDump.push(syntax.body.length);
+                }
+                } catch(e) {console.log(e)}
+            }, {
+                source: source.text,
+                runner: parser.runner,
+                resultDump: resultDump,
+                async: false,
+                maxTime: 1,
+                onComplete: function() {
+                    var mean = this.stats.mean;
+                    logger(parserIndex, sourceIndex, (mean * 1000).toFixed(1));
+                }
+            });
+            setTimeout(function() {
+                benchmark.run();
+            },257);
+        });
+    });
+}
+
 var testsEnabled = false;
 function enableTests() {
     testsEnabled = true;
@@ -239,10 +278,10 @@ function toggleSource(index) {
 function drawTable() {
     var html = '<table><tbody><tr><th>';
     parsers.forEach(function(parser, parserIndex) {
-        html += '<th><span>'+parser.name+'</span><input type="checkbox" '+(parser.run?'checked ':'')+' onchange="toggerParser('+parserIndex+')"/>';
+        html += '<th class="parser-header"><span>'+parser.name+'</span><input type="checkbox" '+(parser.run?'checked ':'')+' onchange="toggleParser('+parserIndex+')"/>';
     })
     sources.forEach(function(source, sourceIndex) {
-        html+='<tr><th><span>'+source.name+'</span><input type="checkbox" '+(source.run?'checked ':'')+' onchange="toggleSource('+sourceIndex+')"/>';
+        html+='<tr><th class="source-header"><span>'+source.name+'</span><input type="checkbox" '+(source.run?'checked ':'')+' onchange="toggleSource('+sourceIndex+')"/>';
         parsers.forEach(function(parser, parserIndex) {
             html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'">';
         });

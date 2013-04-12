@@ -1,0 +1,33 @@
+
+body {
+    font-family: arial;
+}
+
+table {
+    background-color: #eee;
+    border-collapse: collapse;
+}
+
+th {
+    text-align: right;
+    border: 1px solid #ccc;
+}
+th input {
+    text-align; center;
+}
+td {
+    border: 1px solid #ccc;
+    padding-right: 15px;
+    text-align: right;
+}
+.parser-header {
+    font-weight: bold;
+    text-align: center;
+}
+.parser-header span {
+    display: block;
+    padding: 5px 15px;
+}
+.source-header {
+    font-weight: normal;
+}
