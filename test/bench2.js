@@ -72,18 +72,15 @@ var sources = [
     new Source('codemirror-3.11',true),
     new Source('jquery-1.9.1',true),
     new Source('angular-1.0.6',true),
-    new Source('three-r57',true),
+    new Source('three-r57',true)//,
 
-    new Source('q.min',false),
-    new Source('underscore-1.4.4-min',false),
-    new Source('backbone-1.0.0-min',false),
-    new Source('angular-1.0.6.min',false),
-    new Source('jquery-1.9.1.min',false),
-    new Source('three-r57.min',false)
+    // new Source('q.min',false),
+    // new Source('underscore-1.4.4-min',false),
+    // new Source('backbone-1.0.0-min',false),
+    // new Source('angular-1.0.6.min',false),
+    // new Source('jquery-1.9.1.min',false),
+    // new Source('three-r57.min',false)
 ];
-
-var runProfile = /[?&]profile(&|$)/.test(document.location.search);
-
 
 function load(src, callback) {
     var xhr = new XMLHttpRequest();
@@ -167,18 +164,19 @@ function loadSources() {
     return defer;
 }
 
-function simpleBenchmark(runner, source, options) {
+function simpleBenchmark(parser, source, options) {
     var t0 = Date.now(), t1, lines = 0, dt;
+    var runProfile = !!(parser.prof || source.prof);
 
-    runner(source.text, options);
-    if(runProfile) {console.profile();}
+    parser.runner(source.text, options);
+    if(runProfile) {console.profile(parser.name + ' - ' + source.name);}
     for (;;) {
-        runner(source.text, options);
+        parser.runner(source.text, options);
         lines += source.lines;
         dt = Date.now() - t0;
         if (dt > 1000) break;
     }
-    if(runProfile) {console.profileEnd();}
+    if(runProfile) {console.profileEnd(parser.name + ' - ' + source.name);}
     return Math.round(lines / (dt / 1000));
 }
 
@@ -203,7 +201,7 @@ function runSimpleTests() {
         var source = sources[sourceIndex];
         try {
             if(parser.run === true && source.run === true) {
-                data = simpleBenchmark(parser.runner, source, parser.options || {});
+                data = simpleBenchmark(parser, source, parser.options || {});
             }
         } catch(e) {
             data = 'crash';
@@ -278,26 +276,44 @@ function toggleTests(on) {
     );
 }
 
-function toggleParser(index) {
-    parsers[index].run = !parsers[index].run;
+function toggler(e) {
+    var target = e.target;
+    var slider = e.target;
+
+    while(!/slide-check (checked)?$/.test(slider.className) && slider.parentNode) {slider = slider.parentNode;}
+    while(target.tagName !== 'TH' && target.parentNode) {target = target.parentNode;}
+
+    if(target.tagName !== 'TH' || slider.tagName !== 'DIV') {return;}
+
+    var type = target.getAttribute('data-type') === 'parser' ? parsers : sources;
+    var index = target.getAttribute('data-index');
+    var attr = slider.getAttribute('data-type').toLowerCase();
+
+    if(typeof(index) === 'undefined' || typeof(attr) === 'undefined') {return;}
+
+    type[index][attr] = !type[index][attr];
+    slider.className = 'slide-check '+(type[index][attr]?'checked':'');
 }
-function toggleSource(index) {
-    sources[index].run = !sources[index].run;
+
+function generateSlideCheck(text, on) {
+    return '<div class="slide-check '+(on?'checked':'')+'" data-type="'+text+'"><div class="slide-check slider">'+text+'</div><div class="label">'+text+'</div></div>';
 }
 function drawTable() {
     var html = '<table><tbody><tr><th>';
     parsers.forEach(function(parser, parserIndex) {
-        html += '<th class="parser-header"><span>'+parser.name+'</span><input type="checkbox" '+(parser.run?'checked ':'')+' onchange="toggleParser('+parserIndex+')"/>';
+        html += '<th class="parser-header" data-type="parser" data-index="'+parserIndex+'"><span>'+parser.name+'</span>'+generateSlideCheck('Run', parser.run)+generateSlideCheck('Prof');
     })
     sources.forEach(function(source, sourceIndex) {
-        html+='<tr><th class="source-header"><span>'+source.name+'</span><input type="checkbox" '+(source.run?'checked ':'')+' onchange="toggleSource('+sourceIndex+')"/>';
+        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Prof')+'</div>';
         parsers.forEach(function(parser, parserIndex) {
             html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'">';
         });
     });
     html += '</tbody></table>';
 
-    document.getElementById('resultsContainer').innerHTML = html;
+    var container = document.getElementById('resultsContainer');
+    container.onclick = toggler;
+    container.innerHTML = html;
 }
 
 new Q.all(loadParsers(), loadSources()).then(function() {
