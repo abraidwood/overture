@@ -115,36 +115,36 @@ function loadParsers() {
     var defer = Q.defer();
 
     Q.all(parsers.map(function(parserDef) {
-        var promise = Q.defer();
+        var loadDefer = Q.defer();
         var loaded = 0;
         parserDef.files.forEach(function(file) {
             load('parsers/'+file, function(text) {
                 if(typeof(text) === 'undefined') {
-                    promise.resolve();
+                    loadDefer.resolve();
                 } else {
                     var script = document.createElement('script');
                     script.appendChild(document.createTextNode(text));
                     document.getElementsByTagName('head')[0].appendChild(script);
 
                     if(++loaded === parserDef.files.length) {
-                        promise.resolve();
+                        loadDefer.resolve();
                     }
                 }
             });
         })
-        return promise;
+        return loadDefer.promise;
     })).then(function() {
         defer.resolve();
     });
 
-    return defer;
+    return defer.promise;
 }
 
 function loadSources() {
     var defer = Q.defer();
 
-    Q.all(sources.map(function(testCase) {
-        var promise = Q.defer();
+    var tests = sources.map(function(testCase) {
+        var loadDefer = Q.defer();
         load('sources/' + testCase.name + '.js', function(text) {
             if(typeof(text) === 'undefined') {
                 testCase.loadError = true;
@@ -154,14 +154,16 @@ function loadSources() {
                 var newlines = text.match(/\r\n|[\n\r\u2028\u2029]/g);
                 testCase.lines = newlines ? newlines.length : 1;
             }
-            promise.resolve();
+            loadDefer.resolve();
         });
-        return promise;
-    })).then(function() {
+        return loadDefer.promise;
+    });
+
+    Q.all(tests).then(function() {
         defer.resolve();
     });
 
-    return defer;
+    return defer.promise;
 }
 
 function simpleBenchmark(parser, source, options) {
@@ -305,7 +307,7 @@ function drawTable() {
         html += '<th class="parser-header" data-type="parser" data-index="'+parserIndex+'"><span>'+parser.name+'</span>'+generateSlideCheck('Run', parser.run)+generateSlideCheck('Profile');
     })
     sources.forEach(function(source, sourceIndex) {
-        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
+        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><span class="filesize">('+Math.round(source.size/1024)+'kb)</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
         parsers.forEach(function(parser, parserIndex) {
             html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'">';
         });
@@ -317,7 +319,7 @@ function drawTable() {
     container.innerHTML = html;
 }
 
-new Q.all(loadParsers(), loadSources()).then(function() {
+Q.all([loadParsers(), loadSources()]).then(function() {
     drawTable();
     toggleTests(true);
 });
