@@ -30,49 +30,26 @@ td {
 }
 .source-header {
     font-weight: normal;
+    padding: 6px 4px 0 5px;
 }
 
-.source-header > div {
-    display: inline-block;
-}
 .source-header > div > div {
-    display: block;
+    display: inline-block;
     margin: 3px;
 }
 
-.slide-check {
+.run-check {
     font-size: 10px;
-    font-weight: bold;
-    color: #ffffe8;
-    background-color: #aaa;
-    padding: 3px 4px;
+    font-weight: normal;
+    color: #757575;
     display: inline-block;
-    border-radius: 7px;
     margin: 0 3px;
-    cursor: pointer;
     position: relative;
-    padding-left: 24px;
-    border: 1px solid rgba(0,0,0,0.2);
     overflow:hidden;
 }
-.slide-check .label {
-    padding-left: 5px;
-    position: relative;
-    z-index: 1;
-}
-.slide-check .slider {
-    position: absolute;
-    color: transparent;
-    top: 0;
-    border-radius: 3px;
-    left: 0;
-    background-color: #57f;
-    padding: 3px 4px;
-    margin: 0;
-    z-index: 0;
-    -webkit-transition: left 150ms;
-    border: none;
-}
-.slide-check.checked .slider {
-    left: 49%;
+
+.run-check,
+.run-check input,
+.run-check label {
+    cursor: pointer;
 }

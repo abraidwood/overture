@@ -280,7 +280,7 @@ function toggler(e) {
     var target = e.target;
     var slider = e.target;
 
-    while(!/slide-check (checked)?$/.test(slider.className) && slider.parentNode) {slider = slider.parentNode;}
+    while(slider.className !== 'run-check' && slider.parentNode) {slider = slider.parentNode;}
     while(target.tagName !== 'TH' && target.parentNode) {target = target.parentNode;}
 
     if(target.tagName !== 'TH' || slider.tagName !== 'DIV') {return;}
@@ -292,19 +292,20 @@ function toggler(e) {
     if(typeof(index) === 'undefined' || typeof(attr) === 'undefined') {return;}
 
     type[index][attr] = !type[index][attr];
-    slider.className = 'slide-check '+(type[index][attr]?'checked':'');
 }
 
+var checkCount = 0;
 function generateSlideCheck(text, on) {
-    return '<div class="slide-check '+(on?'checked':'')+'" data-type="'+text+'"><div class="slide-check slider">'+text+'</div><div class="label">'+text+'</div></div>';
+    var id = 'node_'+checkCount++;
+    return '<div class="run-check" data-type="'+text+'"><label for="'+id+'">'+text+'</label><input id="'+id+'" '+(on?'checked ':'')+'type="checkbox"/></div>';
 }
 function drawTable() {
     var html = '<table><tbody><tr><th>';
     parsers.forEach(function(parser, parserIndex) {
-        html += '<th class="parser-header" data-type="parser" data-index="'+parserIndex+'"><span>'+parser.name+'</span>'+generateSlideCheck('Run', parser.run)+generateSlideCheck('Prof');
+        html += '<th class="parser-header" data-type="parser" data-index="'+parserIndex+'"><span>'+parser.name+'</span>'+generateSlideCheck('Run', parser.run)+generateSlideCheck('Profile');
     })
     sources.forEach(function(source, sourceIndex) {
-        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Prof')+'</div>';
+        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
         parsers.forEach(function(parser, parserIndex) {
             html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'">';
         });
