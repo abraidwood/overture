@@ -817,7 +817,7 @@
         case 6:
             switch (str) {
             case 'switch': return _switch;
-            case 'typeof': return _typeof;
+            case 'typeof': tokRegexpAllowed = true; return _typeof;
             case 'delete': return _delete;
             case 'return': tokRegexpAllowed = true; return _return;
             }
@@ -2730,4 +2730,3 @@
         return node;
     }
 });
-

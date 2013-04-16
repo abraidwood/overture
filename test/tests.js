@@ -6,6 +6,33 @@ if (typeof exports != "undefined") {
   var testFail = require("./driver.js").testFail;
 }
 
+test("typeof/./", {
+    "type":"Program",
+    "start":0,
+    "end":9,
+    "body":[
+      {
+        "type":"ExpressionStatement",
+        "start":0,
+        "end":9,
+        "expression":{
+          "type":"UnaryExpression",
+          "start":0,
+          "end":9,
+          "operator":"typeof",
+          "prefix":true,
+          "argument":{
+            "type":"Literal",
+            "start":6,
+            "end":9,
+            "value":{},
+            "raw":"/./"
+        }
+      }
+    }
+  ]
+});
+
 test("if(1)/  foo/", {
   type: "Program",
   start: 0,
