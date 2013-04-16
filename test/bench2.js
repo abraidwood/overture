@@ -182,13 +182,13 @@ function showOutput(parserIndex, sourceIndex, data) {
         el.innerText = data;
         if(unitEl._unit !== currentUnit) {
             unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
-            unitEl.innerText = data === '-' ? '':currentUnit;
+            unitEl.innerText = (data === '-' || data === 'crash') ? '':currentUnit;
         }
     } else {
         el.textContent = data;
         if(unitEl._unit !== currentUnit) {
             unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
-            unitEl.textContent = data === '-' ? '':currentUnit;;
+            unitEl.textContent = (data === '-' || data === 'crash') ? '':currentUnit;
         }
     }
 }
