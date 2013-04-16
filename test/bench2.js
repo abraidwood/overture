@@ -1,3 +1,4 @@
+var useMinifiedSources = false;
 var currentUnit = '';
 
 var parsers = [{
@@ -61,17 +62,10 @@ var sources = [
     new Source('underscore-1.4.4',true),
     new Source('q',true),
     new Source('backbone-1.0.0',true),
-    new Source('codemirror-3.11',true),
+    //new Source('codemirror-3.11',true),
     new Source('jquery-1.9.1',true),
     new Source('angular-1.0.6',true),
     new Source('three-r57',true)//,
-
-    // new Source('q.min',false),
-    // new Source('underscore-1.4.4-min',false),
-    // new Source('backbone-1.0.0-min',false),
-    // new Source('angular-1.0.6.min',false),
-    // new Source('jquery-1.9.1.min',false),
-    // new Source('three-r57.min',false)
 ];
 
 function load(src, callback) {
@@ -137,7 +131,7 @@ function loadSources() {
 
     var tests = sources.map(function(testCase) {
         var loadDefer = Q.defer();
-        load('sources/' + testCase.name + '.js', function(text) {
+        load('sources/' + testCase.name + (useMinifiedSources?'.min':'')+'.js', function(text) {
             if(typeof(text) === 'undefined') {
                 testCase.loadError = true;
             } else {
@@ -292,7 +286,7 @@ function toggleTests(on) {
     testsEnabled = on;
 
     Array.prototype.forEach.call(
-        document.getElementsByTagName('button'),
+        document.querySelectorAll('button,input'),
         function(btn) {
             btn.disabled = !on;
         }
@@ -344,9 +338,15 @@ function drawTable() {
     container.innerHTML = html;
 }
 
-Q.all([loadParsers(), loadSources()]).then(function() {
+function toggleMinifiedSources() {
+    useMinifiedSources = !useMinifiedSources;
+    loadSources().then(init);
+}
+function init() {
     drawTable();
     toggleTests(true);
-});
+}
+
+Q.all([loadParsers(), loadSources()]).then(init);
 
 

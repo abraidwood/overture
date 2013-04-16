@@ -8,8 +8,10 @@
 <body>
     <h1>Overture/Acorn/Esprima/ZeParser2 speed comparison</h1>
 
+    <label for="minifiedCheck">Use minified sources</label><input id="minifiedCheck" disabled type="checkbox" onclick="toggleMinifiedSources()"/>
     <button disabled onclick="runSimpleTests()">Run lines/sec</button>
     <button disabled onclick="runBenchmarkTests()">Run ms/parse</button>
+
     <span id="running"></span>
 
     <div id="resultsContainer"></div>
