@@ -19,6 +19,16 @@ td {
     border: 1px solid #ccc;
     padding-right: 15px;
     text-align: right;
+    font-size: 22px;
+    color: #313231;
+}
+td .smaller {
+    font-size: 16px;
+    padding: 1px;
+}
+td .smaller2 {
+    font-size: 13px;
+    padding: 2px;
 }
 .parser-header {
     font-weight: bold;

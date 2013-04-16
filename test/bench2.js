@@ -1,12 +1,4 @@
-function Promise() {
-
-}
-Promise.prototype.then = function() {
-
-}
-Promise.prototype.all = function() {
-    return this;
-}
+var currentUnit = '';
 
 var parsers = [{
     name:'ZeParser2',
@@ -183,15 +175,26 @@ function simpleBenchmark(parser, source, options) {
 }
 
 function showOutput(parserIndex, sourceIndex, data) {
-    var el = document.getElementById('cell_'+parserIndex+'_'+sourceIndex);
+    var el = document.getElementById('cell_'+parserIndex+'_'+sourceIndex).firstChild;
+    var unitEl = el.nextSibling;
+
     if (typeof el.innerText === 'string') {
         el.innerText = data;
+        if(unitEl._unit !== currentUnit) {
+            unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
+            unitEl.innerText = currentUnit;
+        }
     } else {
         el.textContent = data;
+        if(unitEl._unit !== currentUnit) {
+            unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
+            unitEl.textContent = currentUnit;
+        }
     }
 }
 
 function runSimpleTests() {
+    currentUnit = 'k';
     toggleTests(false);
 
     var parserIndex = 0;
@@ -208,7 +211,7 @@ function runSimpleTests() {
         } catch(e) {
             data = 'crash';
         }
-        showOutput(parserIndex, sourceIndex, typeof(data)==='number'?Math.floor(data/1000)+'k':data);
+        showOutput(parserIndex, sourceIndex, typeof(data)==='number'?Math.floor(data/1000):data);
 
         if(sourceIndex < sources.length - 1) {
             sourceIndex++;
@@ -225,9 +228,17 @@ function runSimpleTests() {
     setTimeout(next, 50);
 }
 
+(function() {
+  var requestAnimationFrame = window.requestAnimationFrame || window.mozRequestAnimationFrame ||
+                              window.webkitRequestAnimationFrame || window.msRequestAnimationFrame;
+  window.requestAnimationFrame = requestAnimationFrame;
+})();
+
 function runBenchmarkTests() {
+    currentUnit = 'ms';
     toggleTests(false);
     var resultDump = [];
+    var promises = [];
     var logger = showOutput;
     parsers.forEach(function(parser, parserIndex) {
         sources.forEach(function(source, sourceIndex) {
@@ -235,6 +246,9 @@ function runBenchmarkTests() {
                 logger(parserIndex, sourceIndex, '-');
                 return;
             }
+            var defer = Q.defer();
+            promises.push(defer.promise);
+
             var benchmark = new Benchmark(source.name, function() {
                 try {
                     var syntax = this.options.runner(this.options.source, this.options.options);
@@ -255,7 +269,12 @@ function runBenchmarkTests() {
                 maxTime: 1,
                 onComplete: function() {
                     var mean = this.stats.mean;
-                    logger(parserIndex, sourceIndex, this.aborted ? 'crash' : (mean * 1000).toFixed(1));
+                    var aborted = this.aborted;
+
+                    requestAnimationFrame(function() {
+                        logger(parserIndex, sourceIndex, aborted ? 'crash' : (mean * 1000).toFixed(1));
+                        defer.resolve();
+                    });
                 }
             });
             setTimeout(function() {
@@ -263,7 +282,9 @@ function runBenchmarkTests() {
             }, 127);
         });
     });
-    toggleTests(true);
+    Q.all(promises).then(function() {
+        toggleTests(true);
+    });
 }
 
 var testsEnabled = false;
@@ -309,7 +330,7 @@ function drawTable() {
     sources.forEach(function(source, sourceIndex) {
         html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><span class="filesize">('+Math.round(source.size/1024)+'kb)</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
         parsers.forEach(function(parser, parserIndex) {
-            html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'">';
+            html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'"><span></span><span class="smaller"></span>';
         });
     });
     html += '</tbody></table>';
