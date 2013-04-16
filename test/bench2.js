@@ -160,7 +160,7 @@ function loadSources() {
 
 function simpleBenchmark(parser, source, options) {
     var t0 = Date.now(), t1, lines = 0, dt;
-    var runProfile = !!(parser.prof || source.prof);
+    var runProfile = !!(parser.profile || source.profile);
 
     parser.runner(source.text, options);
     if(runProfile) {console.profile(parser.name + ' - ' + source.name);}
@@ -182,13 +182,13 @@ function showOutput(parserIndex, sourceIndex, data) {
         el.innerText = data;
         if(unitEl._unit !== currentUnit) {
             unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
-            unitEl.innerText = currentUnit;
+            unitEl.innerText = data === '-' ? '':currentUnit;
         }
     } else {
         el.textContent = data;
         if(unitEl._unit !== currentUnit) {
             unitEl.className = (currentUnit === 'ms') ? 'smaller2' : 'smaller';
-            unitEl.textContent = currentUnit;
+            unitEl.textContent = data === '-' ? '':currentUnit;;
         }
     }
 }
