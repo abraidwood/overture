@@ -308,19 +308,23 @@ function toggler(e) {
 
     if(target.tagName !== 'TH' || slider.tagName !== 'DIV') {return;}
 
-    var type = target.getAttribute('data-type') === 'parser' ? parsers : sources;
+    var type = target.getAttribute('data-type');
+    var list = type === 'parser' ? parsers : sources;
     var index = target.getAttribute('data-index');
-    var attr = slider.getAttribute('data-type').toLowerCase();
+    var attr = slider.getAttribute('data-type');
 
     if(typeof(index) === 'undefined' || typeof(attr) === 'undefined') {return;}
 
-    type[index][attr] = !type[index][attr];
+    list[index][attr] = !list[index][attr];
+
+    target.querySelector('input[data-type="'+attr+'"]').checked = list[index][attr];
 }
 
 var checkCount = 0;
 function generateSlideCheck(text, on) {
+    var textLC = text.toLowerCase();
     var id = 'node_'+checkCount++;
-    return '<div class="run-check" data-type="'+text+'"><label for="'+id+'">'+text+'</label><input id="'+id+'" '+(on?'checked ':'')+'type="checkbox"/></div>';
+    return '<div class="run-check" data-type="'+textLC+'"><label for="'+id+'">'+text+'</label><input data-type="'+textLC+'" id="'+id+'" '+(on?'checked ':'')+'type="checkbox"/></div>';
 }
 function drawTable() {
     var html = '<table><tbody><tr><th>';
