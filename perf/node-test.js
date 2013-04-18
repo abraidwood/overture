@@ -5,7 +5,7 @@
 	"use strict";
 
 	var fs = require('fs');
-	var config = require('./config.js');
+	var config = require('./node-test-config.js');
 
 	var prevResults = fs.existsSync(config.resultsFile) ? fs.readFileSync(config.resultsFile, 'utf8') : '';
 	var newResults = {};

@@ -3,6 +3,10 @@ body {
     font-family: arial;
 }
 
+.runner-box {
+    display: inline-block;
+}
+
 table {
     background-color: #eee;
     border-collapse: collapse;
@@ -70,4 +74,12 @@ td .smaller2 {
     line-height: 14px;
     padding:0 2px;
     color: #757575;
+}
+#options-box {
+    display: inline-block;
+    vertical-align: top;
+}
+.parser-options {
+    display: inline-block;
+    vertical-align: top;
 }
