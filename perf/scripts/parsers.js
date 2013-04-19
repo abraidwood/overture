@@ -55,7 +55,7 @@ var parsers = [{
         strictSemicolons: { defaultVal: false, },
         allowTrailingCommas: { defaultVal: true, },
         forbidReserved: { defaultVal: false },
-        onComment: {defaultVal: false}
+        onComment: {fixedVal: false}
 
     },
     runner: function(source, options){
