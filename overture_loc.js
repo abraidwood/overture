@@ -869,7 +869,7 @@
                 switch (str) {
                     case "return": tokRegexpAllowed = true; return _return;
                     case "switch": return _switch;
-                    case "typeof": return _typeof;
+                    case "typeof": tokRegexpAllowed = true; return _typeof;
                     case "delete": return _delete;
                 }
                 return type;
