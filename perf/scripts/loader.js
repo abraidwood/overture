@@ -3,8 +3,8 @@ function load(src, callback) {
     var xhr = new XMLHttpRequest();
 
     try {
-        xhr.timeout = 30000;
         xhr.open('GET', src);
+        xhr.timeout = 30000;
 
         xhr.ontimeout = function () {
             //setText('status', 'Error: time out while loading ' + test);
