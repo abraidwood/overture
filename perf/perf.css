@@ -76,6 +76,9 @@ td .smaller2 {
     padding:0 2px;
     color: #757575;
 }
+.running {
+    background-color: yellow;
+}
 .options-container {
     display: inline-block;
     vertical-align: top;

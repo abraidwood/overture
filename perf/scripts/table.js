@@ -1,6 +1,14 @@
 
+function setRunningClass(cells) {
+    cells.forEach(function(cell) {
+        document.getElementById('cell_'+cell.parserIndex+'_'+cell.sourceIndex).className = 'running';
+    });
+}
+
 function showOutput(parserIndex, sourceIndex, data) {
-    var el = document.getElementById('cell_'+parserIndex+'_'+sourceIndex).firstChild;
+    var el = document.getElementById('cell_'+parserIndex+'_'+sourceIndex);
+    el.className = el.className.replace('running','');
+    el = el.firstChild;
     var unitEl = el.nextSibling;
 
     if (typeof el.innerText === 'string') {

@@ -1,6 +1,21 @@
 var useMinifiedSources = false;
 var currentUnit = '';
 
+function showRunning() {
+    var runningCells = [];
+    parsers.forEach(function(parser, parserIndex) {
+        sources.forEach(function(source, sourceIndex) {
+            if(parser.run === true && source.run === true) {
+                runningCells.push({
+                    parserIndex: parserIndex,
+                    sourceIndex: sourceIndex
+                });
+            }
+        });
+    });
+    setRunningClass(runningCells);
+}
+
 function simpleBenchmark(parser, source, options) {
     var t0 = Date.now(), t1, lines = 0, dt;
     var runProfile = !!(parser.profile || source.profile);
@@ -20,7 +35,10 @@ function simpleBenchmark(parser, source, options) {
 
 function runSimpleTests() {
     currentUnit = 'k';
-    toggleTests(false);
+    requestAnimationFrame(function() {
+        toggleTests(false);
+        showRunning();
+    });
 
     var parserIndex = 0;
     var sourceIndex = 0;
@@ -29,6 +47,8 @@ function runSimpleTests() {
         var data = '-';
         var parser = parsers[parserIndex];
         var source = sources[sourceIndex];
+
+
         try {
             if(parser.run === true && source.run === true) {
                 data = simpleBenchmark(parser, source, parser.options || {});
@@ -61,7 +81,11 @@ function runSimpleTests() {
 
 function runBenchmarkTests() {
     currentUnit = 'ms';
-    toggleTests(false);
+    requestAnimationFrame(function() {
+        toggleTests(false);
+        showRunning();
+    });
+
     var resultDump = [];
     var promises = [];
     var logger = showOutput;
