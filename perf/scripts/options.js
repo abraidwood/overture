@@ -82,9 +82,9 @@ function onOptionClick(e) {
 }
 
 function buildOptionsTable() {
-    var html = '<br /><table><tr><th>';
+    var html = '<table><tr><th>';
     parsers.forEach(function(parser) {
-        html += '<th>'+parser.name;
+        html += '<th><span class="parser-name">'+parser.name+'</span>';
     });
     options.forEach(function(option) {
         html += '<tr><th>'+option.label;

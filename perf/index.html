@@ -9,17 +9,24 @@
     <h1>Overture/Acorn/Esprima/ZeParser2 speed comparison</h1>
 
     <div class="runner-box">
-        <label for="minifiedCheck">Parse minified sources*</label><input id="minifiedCheck" disabled type="checkbox" onclick="toggleMinifiedSources()"/>
-        <button disabled onclick="runSimpleTests()">Run lines/sec</button>
-        <button disabled onclick="runBenchmarkTests()">Run ms/parse</button>
+        <div class="options-header">
+            <label for="minifiedCheck">Parse minified sources*</label><input id="minifiedCheck" disabled type="checkbox" onclick="toggleMinifiedSources()"/>
+            <button disabled onclick="runSimpleTests()">Run lines/sec</button>
+            <button disabled onclick="runBenchmarkTests()">Run ms/parse</button>
 
-        <span id="running"></span>
+            <span id="running"></span>
+        </div>
 
         <div id="resultsContainer"></div>
         <span>* Lines/sec measurements for minified sources are pretty meaningless</span>
     </div>
 
-    <div id="options-box"></div>
+    <div class="options-container">
+        <div class="options-header">
+            Options
+        </div>
+        <div id="options-box">
+    </div>
 
     <script src="sources/benchmark.js"></script>
     <script src="sources/q.js"></script>

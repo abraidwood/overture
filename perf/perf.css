@@ -40,7 +40,8 @@ td .smaller2 {
 }
 .parser-header span {
     display: block;
-    padding: 5px 15px;
+    padding: 5px 0;
+    min-width: 102px;
 }
 .source-header {
     font-weight: normal;
@@ -75,11 +76,35 @@ td .smaller2 {
     padding:0 2px;
     color: #757575;
 }
-#options-box {
+.options-container {
     display: inline-block;
     vertical-align: top;
 }
+.options-header {
+    height: 28px;
+}
 .parser-options {
     display: inline-block;
+    vertical-align: top;
+}
+.parser-name {
+    display: inline-block;
+    font-weight: bold;
+    min-width: 102px;
+    text-align: center;
+}
+.options-container th {
+    font-weight: normal;
+    height: 26px;
+}
+.options-container td {
+    font-size: 16px;
+    padding: 0;
+    text-align: center;
+}
+.options-container label {
+    line-height: 21px;
+}
+.options-container input {
     vertical-align: top;
 }
