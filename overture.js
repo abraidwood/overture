@@ -784,7 +784,7 @@
 
     // And the keywords.
 
-    function isKeyword(str, type) {
+    function isKeyword(str) {
         switch (tokPos - tokStart) {
         case 4:
             switch (str) {
@@ -796,7 +796,7 @@
             case 'else': tokRegexpAllowed = false; return _else;
             case 'case': tokRegexpAllowed = true; return _case;
             }
-            return type;
+            return _name;
         case 5:
             switch (str) {
             case 'false': return _false;
@@ -805,7 +805,7 @@
             case 'catch': return _catch;
             case 'throw': tokRegexpAllowed = false; return _throw;
             }
-            return type;
+            return _name;
         case 3:
             switch (str) {
             case 'var': return _var;
@@ -813,7 +813,7 @@
             case 'try': return _try;
             case 'new': tokRegexpAllowed = false; return _new;
             }
-            return type;
+            return _name;
         case 6:
             switch (str) {
             case 'switch': return _switch;
@@ -821,31 +821,31 @@
             case 'delete': return _delete;
             case 'return': tokRegexpAllowed = true; return _return;
             }
-            return type;
+            return _name;
         case 8:
             switch (str) {
             case 'function': return _function;
             case 'continue': return _continue;
             case 'debugger': return _debugger;
             }
-            return type;
+            return _name;
         case 2:
             switch (str) {
             case 'if': return _if;
             case 'do': return _do;
             case 'in': tokRegexpAllowed = true; return _in;
             }
-            return type;
+            return _name;
         case 7:
             switch (str) {
             case 'default': return _default;
             case 'finally': return _finally;
             }
-            return type;
+            return _name;
         case 10:
             if (str === 'instanceof') {return _instanceof;}
-            return type;
-        default: return type;
+            return _name;
+        default: return _name;
         }
     }
 
@@ -1704,14 +1704,15 @@
         tokRegexpAllowed = false;
 
         var word = readWord_n();
-        var type = _name;
         if (tokPos - tokStart > 1 && containsEsc === false) {
-            type = isKeyword(word, type);
-            if (strict && type === _name && isStrictReservedWord(word)) {
+            tokType = isKeyword(word);
+            if (strict && tokType === _name && isStrictReservedWord(word)) {
                 raise(tokStart, 'The keyword \'' + word + '\' is reserved');
             }
+        } else {
+            tokType = _name;
         }
-        finishToken(type, word);
+        finishToken(tokType, word);
     }
 
     function readWord_checkReserved() {
@@ -1719,17 +1720,18 @@
         tokRegexpAllowed = false;
 
         var word = readWord_n();
-        var type = _name;
         if (word.length > 1 && containsEsc === false) {
-            type = isKeyword(word, type);
-            if (type === _name) {
+            tokType = isKeyword(word);
+            if (tokType === _name) {
                 if ((options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(word))
                     raise(tokStart, 'The keyword \'' + word + '\' is reserved');
                 else if (strict && isStrictReservedWord(word))
                     raise(tokStart, 'The keyword \'' + word + '\' is reserved');
             }
+        } else {
+            tokType = _name;
         }
-        finishToken(type, word);
+        finishToken(tokType, word);
     }
 
     // ## Parser
