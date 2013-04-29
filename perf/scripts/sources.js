@@ -12,7 +12,8 @@ var sources = [
     new Source('q',true),
     new Source('backbone-1.0.0',true),
     //new Source('codemirror-3.11',true),
-    new Source('jquery-1.9.1',true),
+    new Source('jquery-2.0.0',true),
+    new Source('jquery-1.9.1',false),
     new Source('angular-1.0.6',true),
     new Source('three-r57',true)//,
 ];
