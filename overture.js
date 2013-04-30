@@ -793,27 +793,27 @@
             case 'this': return _this;
             case 'with': return _with;
             case 'void': return _void;
-            case 'else': tokRegexpAllowed = false; return _else;
+            case 'else': return _else;
             case 'case': tokRegexpAllowed = true; return _case;
             }
-            return _name;
+            break;
         case 5:
             switch (str) {
             case 'false': return _false;
             case 'break': return _break;
             case 'while': return _while;
             case 'catch': return _catch;
-            case 'throw': tokRegexpAllowed = false; return _throw;
+            case 'throw': return _throw;
             }
-            return _name;
+            break;
         case 3:
             switch (str) {
             case 'var': return _var;
             case 'for': return _for;
             case 'try': return _try;
-            case 'new': tokRegexpAllowed = false; return _new;
+            case 'new': return _new;
             }
-            return _name;
+            break;
         case 6:
             switch (str) {
             case 'switch': return _switch;
@@ -821,32 +821,32 @@
             case 'delete': return _delete;
             case 'return': tokRegexpAllowed = true; return _return;
             }
-            return _name;
+            break;
         case 8:
             switch (str) {
             case 'function': return _function;
             case 'continue': return _continue;
             case 'debugger': return _debugger;
             }
-            return _name;
+            break;
         case 2:
             switch (str) {
             case 'if': return _if;
             case 'do': return _do;
             case 'in': tokRegexpAllowed = true; return _in;
             }
-            return _name;
+            break;
         case 7:
             switch (str) {
             case 'default': return _default;
             case 'finally': return _finally;
             }
-            return _name;
+            break;
         case 10:
             if (str === 'instanceof') {return _instanceof;}
-            return _name;
-        default: return _name;
+            break;
         }
+        return _name;
     }
 
     // ## Character categories
@@ -1501,23 +1501,23 @@
         return ret;
     }
 
-    var rs_str = [];
+    var rs_str = '';
 
-    // http://jsperf.com/readstring/3
+    // http://jsperf.com/readstring/4
     function readString_Esc() {
         var ch = input.charCodeAt(++tokPos);
         ++tokPos;
 
         switch(ch) {
-            case 110: rs_str.push('\n'); break;
-            case 114: rs_str.push('\r'); break;
-            case 120: rs_str.push(String.fromCharCode(readHexChar(2))); break;
-            case 117: rs_str.push(String.fromCharCode(readHexChar(4))); break;
-            case 85: rs_str.push(String.fromCharCode(readHexChar(8))); break;
-            case 116: rs_str.push('\t'); break;
-            case 98: rs_str.push('\b'); break;
-            case 118: rs_str.push('\x0b'); break;
-            case 102: rs_str.push('\f'); break;
+            case 110: rs_str+='\n'; break;
+            case 114: rs_str+='\r'; break;
+            case 120: rs_str+=String.fromCharCode(readHexChar(2)); break;
+            case 117: rs_str+=String.fromCharCode(readHexChar(4)); break;
+            case 85: rs_str+=String.fromCharCode(readHexChar(8)); break;
+            case 116: rs_str+='\t'; break;
+            case 98: rs_str+='\b'; break;
+            case 118: rs_str+='\x0b'; break;
+            case 102: rs_str+='\f'; break;
             case 13:
                 if (input.charCodeAt(tokPos) === 10) ++tokPos;
                 break;
@@ -1527,39 +1527,37 @@
                 if (ch >= 48 & ch <= 55) { // 0-7 -> possible octal
                     ch = readOctalLiteral(ch);
                 }
-                rs_str.push(String.fromCharCode(ch));
+                rs_str+=String.fromCharCode(ch);
         }
     }
 
     function readString(quote) {
         ++tokPos;
-        rs_str.length = 0;
+        rs_str='';
 
         var start = tokPos;
         var lastEsc = tokPos;
         var ch = 0;
-        var str = '';
 
         while (tokPos < inputLen) {
             ch = input.charCodeAt(tokPos);
 
             if (ch === quote) {
                 if (lastEsc === start) {
-                    str = input.substring(lastEsc,tokPos);
+                    rs_str = input.substring(lastEsc,tokPos);
                 } else {
                     if (lastEsc !== tokPos) {
-                        rs_str.push(input.substring(lastEsc,tokPos));
+                        rs_str+=input.substring(lastEsc,tokPos);
                     }
-                    str = rs_str.join('');
                 }
                 ++tokPos;
                 tokRegexpAllowed = false;
-                finishToken(_string, str);
+                finishToken(_string, rs_str);
                 return;
 
             } else if (ch === 92) { // '\'
                 if (lastEsc !== tokPos) {
-                    rs_str.push(input.substring(lastEsc,tokPos));
+                    rs_str+=input.substring(lastEsc,tokPos);
                 }
                 readString_Esc();
                 lastEsc = tokPos;
