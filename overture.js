@@ -953,52 +953,48 @@
 
     // Called at the start of the parse and after every token. Skips
     // whitespace and comments.
-    // http://jsperf.com/skipspace/3
+    // http://jsperf.com/skipspace/4
 
+    var ch_ = 0;
     function skipSpace() {
-        var ch = 0;
         while (tokPos < inputLen) {
-            ch = input.charCodeAt(tokPos);
-            switch(ch) {
-                case 32: ++tokPos; break;
-                case 9: ++tokPos; break;
-                case 10: ++tokPos; break;
-                case 47:
-                    ch = input.charCodeAt(tokPos+1);
-                    if (ch === 42) { // '*'
-                        skipBlockComment();
-                    } else if (ch === 47) { // '/'
-                        skipLineComment();
-                    } else return;
-                    break;
-                case 13:
+            ch_ = input.charCodeAt(tokPos);
+            switch(ch_) {
+            case 9:
+            case 10:
+            case 11:
+            case 12:
+            case 32:
+            case 160:
+            case 0x1680:
+            case 0x180e:
+            case 0x2028:
+            case 0x2029:
+            case 0x202f:
+            case 0x205f:
+            case 0x3000:
+            case 0xfeff:
+                ++tokPos;
+                break;
+            case 47:
+                ch_ = input.charCodeAt(tokPos+1);
+                if (ch_ === 42) {skipBlockComment();}
+                else if (ch_ === 47) {skipLineComment();}
+                else return;
+                break;
+            case 13:
+                ++tokPos;
+                ch_ = input.charCodeAt(tokPos);
+                if (ch_ === 10) {
                     ++tokPos;
-                    ch = input.charCodeAt(tokPos);
-                    if (ch === 10) {         // -> '\r\n'
-                        ++tokPos;
-                    }
-                    break;
-                case 11: ++tokPos; break;
-                case 12: ++tokPos; break;
-                case 160: ++tokPos; break;
-
-                default:
-                    if (ch >= 5760) {
-                        if (ch === 0x1680 ||
-                            ch === 0x180e ||
-                            ch === 0x2028 ||
-                            ch === 0x2029 ||
-                            ch === 0x202f ||
-                            ch === 0x205f ||
-                            ch === 0x3000 ||
-                            ch === 0xfeff || (ch >= 0x2000 && ch <= 0x200a)) {
-                            ++tokPos;
-                        } else {
-                            return;
-                        }
-                    } else {
-                        return;
-                    }
+                }
+                break;
+            default:
+                if (ch_ >= 0x2000 && ch_ <= 0x200a) {
+                    ++tokPos;
+                } else {
+                    return;
+                }
             }
         }
     }
