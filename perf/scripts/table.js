@@ -54,9 +54,7 @@ function toggler(e) {
 
     if(typeof(index) === 'undefined' || typeof(attr) === 'undefined') {return;}
 
-    list[index][attr] = !list[index][attr];
-
-    target.querySelector('input[data-type="'+attr+'"]').checked = list[index][attr];
+    list[index][attr] = target.querySelector('input[data-type="'+attr+'"]').checked;
 }
 
 var checkCount = 0;
