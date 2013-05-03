@@ -571,7 +571,7 @@
         _regexp = new Node('regexp'),
         _string = new Node('string'),
         _name = new Node('name'),
-        _eof = new Binop(0);
+        _eof = new Node('eof');
 
     // Keyword tokens. The `keyword` property (also used in keyword-like
     // operators) indicates that the token originated from an
@@ -586,24 +586,20 @@
     // to know when parsing a label, in order to allow or disallow
     // continue jumps to that label.
 
-    function Keyword(word) {
+    function Keyword(word, params) {
         this.keyword = new String(word);
-        this.isLoop = false;
+        for(var key in params) {
+            if(!params.hasOwnProperty(key)) {continue;}
+            this[key] = params[key];
+        }
     }
-    function Binop(n) {
-        this.binop = n;
-    }
-    function PrePostBinop(n) {
-        this.binop = n;
-        this.isAssign = false;
-        this.prefix = false;
-        this.postfix = false;
-        this.isUpdate = false;
-    }
-    function PrefixType() {
-        this.beforeExpr = false;
-        this.binop = 0;
-        this.prefix = true;
+
+    function Binop(precedence, params) {
+        this.precedence = precedence;
+        for(var key in params) {
+            if(!params.hasOwnProperty(key)) {continue;}
+            this[key] = params[key];
+        }
     }
 
     var _break = new Keyword('break');
@@ -612,11 +608,11 @@
     var _continue = new Keyword('continue');
     var _debugger = new Keyword('debugger');
     var _default = new Keyword('default');
-    var _do = new Keyword('do');
+    var _do = new Keyword('do', {isLoop:true});
     var _else = new Keyword('else');
     var _false = new Keyword('false');
     var _finally = new Keyword('finally');
-    var _for = new Keyword('for');
+    var _for = new Keyword('for', {isLoop:true});
     var _function = new Keyword('function');
     var _if = new Keyword('if');
     var _new = new Keyword('new');
@@ -628,12 +624,8 @@
     var _true = new Keyword('true');
     var _try = new Keyword('try');
     var _var = new Keyword('var');
-    var _while = new Keyword('while');
+    var _while = new Keyword('while', {isLoop:true});
     var _with = new Keyword('with');
-
-    _do.isLoop = true;
-    _for.isLoop = true;
-    _while.isLoop = true;
 
 
     // Some keywords are treated as regular operators. `in` sometimes
@@ -643,9 +635,9 @@
     var _in = new Binop(7);
 
     //
-    var _void = new PrefixType();
-    var _delete = new PrefixType();
-    var _typeof = new PrefixType();
+    var _void = new Binop(0, {prefix:true});
+    var _delete = new Binop(0, {prefix:true});
+    var _typeof = new Binop(0, {prefix:true});
     var _instanceof = new Binop(7);
 
     // Punctuation token types. Again, the `type` property is purely for debugging.
@@ -678,19 +670,12 @@
     // binary operators with a very low precedence, that should result
     // in AssignmentExpression nodes.
 
-    var _slash = new PrePostBinop(10);
-    var _eq = new PrePostBinop(0);
-    _eq.isAssign = true;
-    var _assign = new PrePostBinop(0);
-    _assign.isAssign = true;
-    var _plusmin = new PrePostBinop(9);
-    _plusmin.prefix = true;
-    var _incdec = new PrePostBinop(0);
-    _incdec.prefix = true;
-    _incdec.postfix = true;
-    _incdec.isUpdate = true;
-    var _prefix = new PrePostBinop(0);
-    _prefix.prefix = true;
+    var _slash = new Binop(10);
+    var _eq = new Binop(0, {isAssign:true});
+    var _assign = new Binop(0, {isAssign:true});
+    var _plusmin = new Binop(9, {prefix:true});
+    var _incdec = new Binop(0, {prefix:true,postfix:true,isUpdate:true});
+    var _prefix = new Binop(0, {prefix:true});
 
     var _bin_minop = new Binop(0);
     var _bin1 = new Binop(1);
@@ -933,6 +918,7 @@
         skipSpace();
     }
 
+    // Skip a block comment '/* ... */''
     // http://jsperf.com/skipblockcomment/2
     function skipBlockComment() {
         tokPos += 2;
@@ -941,6 +927,7 @@
         tokPos = end + 2;
     }
 
+    // Skip a line comment '// ... <newline>'
     // http://jsperf.com/skiplinecomment/2
     function skipLineComment() {
         tokPos += 2;
@@ -1003,6 +990,7 @@
 
     var nextChar = 0;
 
+    // Read '.[0-9]' and '.'
     // The interpretation of a dot depends on whether it is followed
     // by a digit.
     function readToken_dot() {
@@ -1016,6 +1004,7 @@
         }
     }
 
+    // Read '/=' and '='
     // Line and block comments are skipped by skipSpace before
     // we get here
     function readToken_slash() {
@@ -1036,6 +1025,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '*=' and '*'
     function readToken_multiply() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1048,6 +1038,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '%=' and '%'
     function readToken_modulo() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1060,6 +1051,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '||', '|=' and '|'
     function readToken_OR() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1075,6 +1067,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '&&', '&=' and '&'
     function readToken_AND() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1090,6 +1083,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '^=' and '^'
     function readToken_XOR() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1102,6 +1096,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '++', '+=' and '+'
     function readToken_plus() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1117,6 +1112,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '--', '-=' and '-'
     function readToken_minus() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1132,6 +1128,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '<<=' and '<<'
     function readToken_leftShift() {
         if (input.charCodeAt(tokPos + 1) === 61) {
             tokPos += 2;
@@ -1142,6 +1139,7 @@
         }
     }
 
+    // Read '<=' and '<'
     function readToken_lessThan() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1158,6 +1156,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '>>=', '>>>=', '>>>' and '>>'
     function readToken_rightShift() {
         nextChar = input.charCodeAt(tokPos + 1);
 
@@ -1179,6 +1178,7 @@
         }
     }
 
+    // Read '>=' and '>'
     function readToken_greaterThan() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1195,6 +1195,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '!==', '!=' and '!'
     function readToken_exclamation() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1212,6 +1213,7 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '===', '==' and '='
     function readToken_equal() {
         ++tokPos;
         nextChar = input.charCodeAt(tokPos);
@@ -1229,15 +1231,17 @@
         tokRegexpAllowed = true;
     }
 
+    // Read '~'
     function readToken_BITWISE_NOT() {
         ++tokPos;
         finishToken(_prefix, UnaryOperator.BITWISE_NOT);
         tokRegexpAllowed = true;
     }
 
+    // Read '0[0-9.eExX]'
     function readMaybeHex() {
         nextChar = input.charCodeAt(tokPos+1);
-        if (nextChar === 120 || nextChar === 88) { // xX
+        if (nextChar === 120 || nextChar === 88) {
             readHexNumber();
         } else {
             readNumber(48);
@@ -1378,6 +1382,8 @@
         finishToken(_regexp, new RegExp(content, readWord_regexpMods()));
     }
 
+    // Read a hex number with optionally specified length
+    // Reads the numeric side of \x[0-9]{2}, \u[0-9]{4}, \U[0-9]{8}, and 0x[0-9]+
     // http://jsperf.com/readhex/4
     function readInt16(len) {
         var start=tokPos, total=0, code=0, i=0;
@@ -1388,9 +1394,9 @@
             if (code >= 48 && code <= 57) {
                 total = total * 16 +  code - 48;
             } else if (code >= 97 && code <= 102) {
-                total = total * 16 + code - 87;
+                total = total * 16 + code - 87; // 87 = 97 - 10
             } else if (code >= 65 && code <= 90) {
-                total = total * 16 + code - 55;
+                total = total * 16 + code - 55; // 55 = 65 - 10
             }
             else break;
         }
@@ -1398,6 +1404,7 @@
         return total;
     }
 
+    // Read 0x[0-9]+ with checks
     function readHexNumber() {
         tokPos += 2;
         var val = readInt16(0);
@@ -1471,8 +1478,7 @@
         finishToken(_num, code);
     }
 
-    // Read a string value, interpreting backslash-escapes.
-
+    // Read octal literals \000 to \377
     function readOctalLiteral(ch) {
         var shift = 0;
         var ret = ch - 48;
@@ -1499,6 +1505,14 @@
 
     var rs_str = '';
 
+    // Used to read character escape sequences ('\x', '\u', '\U').
+    function readHexChar(len) {
+        var n = readInt16(len);
+        if (n === null) raise(tokStart, 'Bad character escape sequence');
+        return n;
+    }
+
+    // Read escaped chars in strings
     // http://jsperf.com/readstring/4
     function readString_Esc() {
         var ch = input.charCodeAt(++tokPos);
@@ -1527,6 +1541,7 @@
         }
     }
 
+    // Read a string ending with a quote - either ' or "
     function readString(quote) {
         ++tokPos;
         rs_str='';
@@ -1569,27 +1584,9 @@
             raise(tokStart, 'Unterminated string constant');
         }
     }
-    // Used to read character escape sequences ('\x', '\u', '\U').
 
-    function readHexChar(len) {
-        var n = readInt16(len);
-        if (n === null) raise(tokStart, 'Bad character escape sequence');
-        return n;
-    }
-
-    // Used to signal to callers of `readWord1` whether the word
-    // contained any escape sequences. This is needed because words with
-    // escape sequences must not be interpreted as keywords.
-
-    var containsEsc;
-
-    // Read an identifier, and return it as a string. Sets `containsEsc`
-    // to whether the word contained a '\u' escape.
-    //
-    // Only builds up the word character-by-character when it actually
-    // containeds an escape, as a micro-optimization.
-
-    // g, \u0067, i, \u0069, m, \u006d, \u006D
+    // Read the mod characters which may immediately follow a RegExp
+    // 'g', '\u0067', 'i', '\u0069', 'm', '\u006d', '\u006D'
     function readWord_regexpMods() {
         var start = tokPos;
         var ch = input.charCodeAt(tokPos);
@@ -1648,10 +1645,10 @@
         return mods;
     }
 
+    // Slow function to build strings character by character.  Called
+    // only when the quick function hits an escape char
     // http://jsperf.com/readword/3
     function readWord_Esc(word, identifierFn) {
-        containsEsc = true;
-
         for (;tokPos<inputLen;) {
             var ch = input.charCodeAt(tokPos);
             if (identifierFn[ch] === true) {
@@ -1677,7 +1674,8 @@
         return word;
     }
 
-    function readWord_n() {
+    // Read characters until one's not an allowed identifier char
+    function readWord_simple() {
         var start = tokPos, ch = 0;
         ++tokPos;
         for (;tokPos<inputLen;) {
@@ -1690,15 +1688,13 @@
         return input.substring(start, tokPos);
     }
 
-    // Read an identifier or keyword token. Will check for reserved
+    // Read an identifier or keyword token. Will check for strict reserved
     // words when necessary.
-
     function readWord() {
-        containsEsc = false;
         tokRegexpAllowed = false;
 
-        var word = readWord_n();
-        if (tokPos - tokStart > 1 && containsEsc === false) {
+        var word = readWord_simple();
+        if (tokPos - tokStart > 1) {
             tokType = isKeyword(word);
             if (strict && tokType === _name && isStrictReservedWord(word)) {
                 raise(tokStart, 'The keyword \'' + word + '\' is reserved');
@@ -1709,12 +1705,16 @@
         finishToken(tokType, word);
     }
 
+
+    // As above, read an identifier or keyword token. Will check for
+    // strict reserved words when necessary. Also checks for ECMAScript
+    // 3 / 5 reserved words.
+    // Replaces readWord depending on parse options.
     function readWord_checkReserved() {
-        containsEsc = false;
         tokRegexpAllowed = false;
 
         var word = readWord_n();
-        if (word.length > 1 && containsEsc === false) {
+        if (word.length > 1) {
             tokType = isKeyword(word);
             if (tokType === _name) {
                 if ((options.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(word))
@@ -1729,7 +1729,6 @@
     }
 
     // ## Parser
-
     // A recursive descent parser operates by defining functions for all
     // syntactic elements, and recursively calling those, each function
     // advancing the input stream and returning an AST node. Precedence
@@ -1748,10 +1747,9 @@
     //
     // [opp]: http://en.wikipedia.org/wiki/Operator-precedence_parser
 
-    // ### Parser utilities
+
 
     // Continue to the next token.
-
     function next() {
         lastEnd = tokEnd;
         readToken();
@@ -1759,7 +1757,6 @@
 
     // Enter strict mode. Re-reads the next token to please pedantic
     // tests ("use strict"; 010; -- should fail).
-
     function setStrict(strct) {
         strict = strct;
         tokPos = lastEnd;
@@ -1768,7 +1765,6 @@
     }
 
     // Test whether a statement node is the string literal `"use strict"`.
-
     function isUseStrict(stmt) {
         return options.ecmaVersion >= 5 && stmt instanceof ExpressionStatement &&
             stmt.expression instanceof Literal_string && stmt.expression.value === 'use strict';
@@ -1776,7 +1772,6 @@
 
     // Predicate that tests whether the next token is of the given
     // type, and if yes, consumes it as a side effect.
-
     function eat(type) {
         if (tokType === type) {
             next();
@@ -1785,8 +1780,7 @@
         return false;
     }
 
-    // Test whether a semicolon can be inserted at the current position.
-
+    // Tests to see if a semicolon can be inserted at the current position.
     function cannotInsertSemicolon() {
         return tokType !== _eof && tokType !== _braceR && !newline.test(input.substring(lastEnd, tokStart));
     }
@@ -1799,8 +1793,6 @@
             return tokType !== _eof && tokType !== _braceR && !newline.test(input.substring(lastEnd, tokStart));
         }
     }
-    // Consume a semicolon, or, failing that, see if we are allowed to
-    // pretend that there is a semicolon at this position.
 
     function semicolon() {
         if (not_semicolon()) unexpected();
@@ -1869,17 +1861,11 @@
     var loopLabel = {kind: str_loop};
     var switchLabel = {kind: str_switch};
 
-    // Parse a single statement.
-    //
-    // If expecting a statement and finding a slash operator, parse a
-    // regular expression literal. This is to handle cases like
-    // `if (foo) /blah/.exec(foo);`, where looking at the previous token
-    // does not help.
 
+    // Verifies that there is an actual destination to break or
+    // continue to.
     function check_label_exists(label,isBreak,starttype) {
         var i=0,leni = labels.length;
-        // Verify that there is an actual destination to break or
-        // continue to.
 
         for (; i < leni; ++i) {
             var lab = labels[i];
@@ -1891,6 +1877,7 @@
         if (i === leni) raise(tokPos, 'Unsyntactic ' + starttype.keyword);
     }
 
+    // Parse 'break' either from loop or switch
     function parse_BreakStatement() {
         var starttype = tokType, node = new BreakStatement();
         next();
@@ -1906,6 +1893,7 @@
         return node;
     }
 
+    // Parse 'continue' either in loop
     function parse_ContinueStatement() {
         var starttype = tokType, node = new ContinueStatement();
         next();
@@ -1921,6 +1909,7 @@
         return node;
     }
 
+    // Parse 'debugger'
     function parse_DebuggerStatement() {
         var node = new DebuggerStatement();
         next();
@@ -1928,6 +1917,7 @@
         return node;
     }
 
+    // Parse 'do { } while()'
     function parse_DoWhileStatement() {
         var node = new DoWhileStatement();
         next();
@@ -1940,6 +1930,7 @@
         return node;
     }
 
+    // Parse 'for (;;) {}' and 'for ( in ) {}'
     // Disambiguating between a `for` and a `for`/`in` loop is
     // non-trivial. Basically, we have to parse the init `var`
     // statement or expression, disallowing the `in` operator (see
@@ -1981,6 +1972,7 @@
         return node;
     }
 
+    // Parse 'function'
     function parse_Function() {
         var node = new FunctionDeclaration();
         next();
@@ -1988,6 +1980,7 @@
         return parseFunction(node);
     }
 
+    // Parse 'if() {}'
     function parse_IfStatement() {
         var node = new IfStatement();
         next();
@@ -1999,6 +1992,7 @@
         return node;
     }
 
+    // Parse 'return'
     // In `return` (and `break`/`continue`), the keywords with
     // optional arguments, we eagerly look for a semicolon or the
     // possibility to insert one.
@@ -2017,6 +2011,7 @@
         }
     }
 
+    // Parse 'switch() {<case:>* <default:>?}'
     // Statements under must be grouped (by label) in SwitchCase
     // nodes. `cur` is used to keep the node that we are currently
     // adding statements to.
@@ -2061,6 +2056,7 @@
         return node;
     }
 
+    // Parse 'throw'
     function parse_ThrowStatement() {
         var node = new ThrowStatement();
         next();
@@ -2071,6 +2067,7 @@
         return node;
     }
 
+    // Parse 'try {} catch() {}', 'try {} finally {}', 'try {} catch() {} finally {}'
     function parse_TryStatement() {
         var node = new TryStatement();
         next();
@@ -2098,6 +2095,7 @@
         return node;
     }
 
+    // Parse 'var'
     function parseStatement_var() {
         next();
         var node = parseVar();
@@ -2105,6 +2103,7 @@
         return node;
     }
 
+    // Parse 'while() {}'
     function parse_WhileStatement() {
         var node = new WhileStatement();
         next();
@@ -2115,6 +2114,7 @@
         return node;
     }
 
+    // Parse 'with () {}'
     function parse_WithStatement() {
         var node = new WithStatement();
         if (strict) raise(tokStart, '\'with\' in strict mode');
@@ -2124,6 +2124,7 @@
         return node;
     }
 
+    // Parse an empty statement, i.e. a solitary semicolon
     function parse_EmptyStatement() {
         var node = new EmptyStatement();
         next();
@@ -2260,8 +2261,7 @@
         return node;
     }
 
-    // Parse a `for`/`in` loop.
-
+    // Parse a 'for ( in ) {}' loop.
     function parse_ForInStatement() {
         var node = new ForInStatement();
         node.right = parseExpression(false);
@@ -2271,7 +2271,6 @@
     }
 
     // Parse a list of variable declarations.
-
     function parseVar(noIn) {
         var node = new VariableDeclaration();
         for (;;) {
@@ -2357,7 +2356,7 @@
         var node = null;
         var curTokType = tokType;
 
-        if (curTokType.binop !== 0 && curTokType.binop > minTokType.binop && (!noIn || tokType !== _in)) {
+        if (curTokType.precedence !== 0 && curTokType.precedence > minTokType.precedence && (!noIn || tokType !== _in)) {
 
             if (tokVal === LogicalOperator.AND || tokVal === LogicalOperator.OR) {
                 node = new LogicalExpression();
