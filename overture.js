@@ -998,7 +998,7 @@
         skipSpace();
     }
 
-    // Skip a block comment '/* ... */''
+    // Skip a block comment '/* ... */'
     // http://jsperf.com/skipblockcomment/2
     function skipBlockComment() {
         tokPos += 2;
@@ -1085,8 +1085,7 @@
     }
 
     // Read '/=' and '='
-    // Line and block comments are skipped by skipSpace before
-    // we get here
+    // Line and block comments are skipped by skipSpace before we get here
     function readToken_slash() {
         ++tokPos;
         if (tokRegexpAllowed) {
