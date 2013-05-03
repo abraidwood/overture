@@ -2726,7 +2726,7 @@
         // flag (restore them to their old value afterwards).
         var oldInFunc = inFunction, oldLabels = labels;
         inFunction = true; labels = [];
-        node.body = parse_BlockStatement(true);
+        node.body = parse_BlockStatement();
         inFunction = oldInFunc; labels = oldLabels;
 
         // If this is a strict mode function, verify that argument names
