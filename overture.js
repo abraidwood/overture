@@ -249,6 +249,7 @@
     // An identifier. Note that an identifier may be an expression or a destructuring pattern.
     function Identifier() {
         this.type = 'Identifier';
+        this.loc = null;                    // SourceLocation | null
         this.name = null;                   // string
     }
 
@@ -256,24 +257,28 @@
     function Program() {
         this.type = 'Program';
         this.body = [];                     // [ Statement ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A break statement.
     function BreakStatement() {
         this.type = 'BreakStatement';
         this.label = null;                  // Identifier | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A continue statement.
     function ContinueStatement() {
         this.type = 'ContinueStatement';
         this.label = null;                  // Identifier | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A debugger statement.
     // Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.
     function DebuggerStatement() {
         this.type = 'DebuggerStatement';
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A while statement.
@@ -281,6 +286,7 @@
         this.type = 'DoWhileStatement';
         this.body = null;                   // Statement
         this.test = null;                   // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An if statement.
@@ -289,12 +295,14 @@
         this.test = null;                   // Expression
         this.consequent = null;             // Statement
         this.alternate = null;              // Statement | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A return statement.
     function ReturnStatement() {
         this.type = 'ReturnStatement';
         this.argument = null;               // Expression | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
@@ -303,6 +311,7 @@
         this.discriminant = null;           // Expression
         this.cases = [];                    // [ SwitchCase ]
         this.lexical = false;               // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
@@ -310,12 +319,14 @@
         this.type = 'SwitchCase';
         this.test = null;                   // Expression | null
         this.consequent = [];               // [ Statement ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A throw statement.
     function ThrowStatement() {
         this.type = 'ThrowStatement';
         this.argument = null;               // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A try statement.
@@ -326,6 +337,7 @@
         this.handler = null;                // CatchClause | null
         //this.guardedHandlers = [];        // [ CatchClause ]
         this.finalizer = null;              // BlockStatement | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
@@ -335,12 +347,14 @@
         this.param = null;                  // Pattern
         //this.guard = null;                // Expression | null
         this.body = null;                   // BlockStatement
+        this.loc = null;                    // SourceLocation | null
     }
 
     function WhileStatement() {
         this.type = 'WhileStatement';
         this.body = null;                   // Statement
         this.test = null;                   // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A with statement.
@@ -348,11 +362,13 @@
         this.type = 'WithStatement';
         this.object = null;                 // Expression
         this.body = null;                   // Statement
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An empty statement, i.e., a solitary semicolon.
     function EmptyStatement() {
         this.type = 'EmptyStatement';
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A labeled statement, i.e., a statement prefixed by a break/continue label.
@@ -360,18 +376,21 @@
         this.type = 'LabeledStatement';
         this.label = null;                  // Identifier
         this.body = null;                   // Statement
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An expression statement, i.e., a statement consisting of a single expression.
     function ExpressionStatement() {
         this.type = 'ExpressionStatement';
         this.expression = null;             // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A block statement, i.e., a sequence of statements surrounded by braces.
     function BlockStatement() {
         this.type = 'BlockStatement';
         this.body = [];                     // [ Statement ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A for statement.
@@ -381,6 +400,7 @@
         this.test = null;                   // Expression | null
         this.update = null;                 // Expression | null
         this.body = null;                   // Statement
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A for/in statement, or, if each is true, a for each/in statement.
@@ -390,6 +410,7 @@
         this.left = null;                   // VariableDeclaration |  Expression
         this.right = null;                  // Expression
         this.body = null;                   // Statement
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A variable declaration, via one of var, let, or const.
@@ -397,6 +418,7 @@
         this.type = 'VariableDeclaration';
         this.declarations = [];             // [ VariableDeclarator ]
         this.kind = 'var';                  // "var" | "let" | "const"
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A variable declarator.
@@ -406,12 +428,14 @@
         this.type = 'VariableDeclarator';
         this.id = null;                     // Pattern
         this.init = null;                   // Expression | null
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A sequence expression, i.e., a comma-separated sequence of expressions.
     function SequenceExpression() {
         this.type = 'SequenceExpression';
         this.expressions = [];              // [ Expression ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An assignment operator expression.
@@ -420,6 +444,7 @@
         this.operator = null;               // AssignmentOperator
         this.left = null;                   // Expression
         this.right = null;                  // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A conditional expression, i.e., a ternary ?/: expression.
@@ -428,6 +453,7 @@
         this.test = null;                   // Expression
         this.consequent = null;             // Expression
         this.alternate = null;              // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A logical operator expression.
@@ -436,6 +462,7 @@
         this.operator = null;               // LogicalOperator
         this.left = null;                   // Expression
         this.right = null;                  // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A binary operator expression.
@@ -444,6 +471,7 @@
         this.operator = null;               // BinaryOperator
         this.left = null;                   // Expression
         this.right = null;                  // Expression
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An update (increment or decrement) operator expression.
@@ -452,6 +480,7 @@
         this.operator = null;               // UpdateOperator
         this.argument = null;               // Expression
         this.prefix = true;                 // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A unary operator expression.
@@ -460,6 +489,7 @@
         this.operator = null;               // UnaryOperator
         this.argument = null;               // Expression
         this.prefix = true;                 // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
@@ -469,12 +499,14 @@
         this.object = b;                    // Expression
         this.property = null;               // Identifier | Expression
         this.computed = false;              // boolean
+        this.loc = null;                    // SourceLocation | null
     }
     function MemberExpression_bracketL(b) {
         this.type = 'MemberExpression';
         this.object = b;                    // Expression
         this.property = null;               // Identifier | Expression
         this.computed = true;               // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A function or method call expression.
@@ -482,11 +514,13 @@
         this.type = 'CallExpression';
         this.callee = callee;               // Expression
         this.arguments = [];                // [ Expression | null ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A this expression.
     function ThisExpression() {
         this.type = 'ThisExpression';
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A literal token. Note that a literal can be an expression.
@@ -494,32 +528,39 @@
     function Literal_number() {
         this.type = 'Literal';
         this.value = 0;                     // number
+        this.loc = null;                    // SourceLocation | null
     }
     function Literal_string() {
         this.type = 'Literal';
         this.value = '';                    // string
+        this.loc = null;                    // SourceLocation | null
     }
     function Literal_regexp() {
         this.type = 'Literal';
         this.value = null;                  // regexp
+        this.loc = null;                    // SourceLocation | null
     }
     function Literal_null() {
         this.type = 'Literal';
         this.value = null;                  // null
+        this.loc = null;                    // SourceLocation | null
     }
     function Literal_true() {
         this.type = 'Literal';
         this.value = true;                  // true
+        this.loc = null;                    // SourceLocation | null
     }
     function Literal_false() {
         this.type = 'Literal';
         this.value = false;                 // false
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An array expression.
     function ArrayExpression() {
         this.type = 'ArrayExpression';
         this.elements = [];                 // [ Expression | null ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A new expression.
@@ -527,12 +568,14 @@
         this.type = 'NewExpression';
         this.callee = null;                 // Expression
         this.arguments = [];                // [ Expression | null ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
     function ObjectExpression() {
         this.type = 'ObjectExpression';
         this.properties = [];               // [ ObjectExpressionProp ]
+        this.loc = null;                    // SourceLocation | null
     }
 
     // Overture helper
@@ -552,6 +595,7 @@
         this.rest = null;                   // Identifier | null
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // A function expression.
@@ -563,6 +607,7 @@
         this.rest = null;                   // Identifier | null
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
+        this.loc = null;                    // SourceLocation | null
     }
 
     // Overture helper
