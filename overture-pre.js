@@ -6,7 +6,7 @@
 //
 // Git repositories for Overture are available at
 //
-//         https://github.com/abraidwood/overture.git
+//         [https://github.com/abraidwood/overture.git]
 //
 // Please use the [github bug tracker][ghbt] to report issues.
 //
@@ -23,8 +23,6 @@
 //
 //         http://marijnhaverbeke.nl/git/acorn
 //         https://github.com/marijnh/acorn.git
-//
-// Please use the [github bug tracker][ghbt] to report issues.
 //
 
 /* jshint -W053, strict:true, eqeqeq:true, quotmark:single, undef:true, unused:true, trailing:true  */
@@ -248,20 +246,23 @@
         this.column = tokPos - tokLineStart;// number >= 0
     }
 
-    // An identifier. Note that an identifier may be an expression or a destructuring pattern.
+    // ### Programs
     function Identifier() {
         this.type = 'Identifier';
         this.name = null;                   // string
-        // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        /* @if LOCATIONS=true */
+        this.loc = new SourceLocation();    // SourceLocation | null
+        /* @endif */
     }
+    // An identifier. Note that an identifier may be an expression or a destructuring pattern.
 
     // A complete program source tree.
     function Program() {
         this.type = 'Program';
         this.body = [];                     // [ Statement ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A break statement.
@@ -269,7 +270,8 @@
         this.type = 'BreakStatement';
         this.label = null;                  // Identifier | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A continue statement.
@@ -277,7 +279,8 @@
         this.type = 'ContinueStatement';
         this.label = null;                  // Identifier | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A debugger statement.
@@ -285,7 +288,8 @@
     function DebuggerStatement() {
         this.type = 'DebuggerStatement';
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A while statement.
@@ -294,7 +298,8 @@
         this.body = null;                   // Statement
         this.test = null;                   // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An if statement.
@@ -304,7 +309,8 @@
         this.consequent = null;             // Statement
         this.alternate = null;              // Statement | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A return statement.
@@ -312,7 +318,8 @@
         this.type = 'ReturnStatement';
         this.argument = null;               // Expression | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
@@ -322,7 +329,8 @@
         this.cases = [];                    // [ SwitchCase ]
         this.lexical = false;               // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
@@ -331,7 +339,8 @@
         this.test = null;                   // Expression | null
         this.consequent = [];               // [ Statement ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A throw statement.
@@ -339,7 +348,8 @@
         this.type = 'ThrowStatement';
         this.argument = null;               // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A try statement.
@@ -351,7 +361,8 @@
         //this.guardedHandlers = [];        // [ CatchClause ]
         this.finalizer = null;              // BlockStatement | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
@@ -362,7 +373,8 @@
         //this.guard = null;                // Expression | null
         this.body = null;                   // BlockStatement
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     function WhileStatement() {
@@ -370,7 +382,8 @@
         this.body = null;                   // Statement
         this.test = null;                   // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A with statement.
@@ -379,14 +392,16 @@
         this.object = null;                 // Expression
         this.body = null;                   // Statement
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An empty statement, i.e., a solitary semicolon.
     function EmptyStatement() {
         this.type = 'EmptyStatement';
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A labeled statement, i.e., a statement prefixed by a break/continue label.
@@ -395,7 +410,8 @@
         this.label = null;                  // Identifier
         this.body = null;                   // Statement
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An expression statement, i.e., a statement consisting of a single expression.
@@ -403,7 +419,8 @@
         this.type = 'ExpressionStatement';
         this.expression = null;             // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A block statement, i.e., a sequence of statements surrounded by braces.
@@ -411,7 +428,8 @@
         this.type = 'BlockStatement';
         this.body = [];                     // [ Statement ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A for statement.
@@ -422,7 +440,8 @@
         this.update = null;                 // Expression | null
         this.body = null;                   // Statement
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A for/in statement, or, if each is true, a for each/in statement.
@@ -433,7 +452,8 @@
         this.right = null;                  // Expression
         this.body = null;                   // Statement
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A variable declaration, via one of var, let, or const.
@@ -442,7 +462,8 @@
         this.declarations = [];             // [ VariableDeclarator ]
         this.kind = 'var';                  // "var" | "let" | "const"
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A variable declarator.
@@ -453,7 +474,8 @@
         this.id = null;                     // Pattern
         this.init = null;                   // Expression | null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A sequence expression, i.e., a comma-separated sequence of expressions.
@@ -461,7 +483,8 @@
         this.type = 'SequenceExpression';
         this.expressions = [];              // [ Expression ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An assignment operator expression.
@@ -471,7 +494,8 @@
         this.left = null;                   // Expression
         this.right = null;                  // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A conditional expression, i.e., a ternary ?/: expression.
@@ -481,7 +505,8 @@
         this.consequent = null;             // Expression
         this.alternate = null;              // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A logical operator expression.
@@ -491,7 +516,8 @@
         this.left = null;                   // Expression
         this.right = null;                  // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A binary operator expression.
@@ -501,7 +527,8 @@
         this.left = null;                   // Expression
         this.right = null;                  // Expression
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An update (increment or decrement) operator expression.
@@ -511,7 +538,8 @@
         this.argument = null;               // Expression
         this.prefix = true;                 // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A unary operator expression.
@@ -521,7 +549,8 @@
         this.argument = null;               // Expression
         this.prefix = true;                 // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
@@ -532,7 +561,8 @@
         this.property = null;               // Identifier | Expression
         this.computed = false;              // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function MemberExpression_bracketL(b) {
         this.type = 'MemberExpression';
@@ -540,7 +570,8 @@
         this.property = null;               // Identifier | Expression
         this.computed = true;               // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A function or method call expression.
@@ -549,14 +580,16 @@
         this.callee = callee;               // Expression
         this.arguments = [];                // [ Expression | null ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A this expression.
     function ThisExpression() {
         this.type = 'ThisExpression';
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A literal token. Note that a literal can be an expression.
@@ -565,37 +598,43 @@
         this.type = 'Literal';
         this.value = 0;                     // number
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function Literal_string() {
         this.type = 'Literal';
         this.value = '';                    // string
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function Literal_regexp() {
         this.type = 'Literal';
         this.value = null;                  // regexp
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function Literal_null() {
         this.type = 'Literal';
         this.value = null;                  // null
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function Literal_true() {
         this.type = 'Literal';
         this.value = true;                  // true
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
     function Literal_false() {
         this.type = 'Literal';
         this.value = false;                 // false
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An array expression.
@@ -603,7 +642,8 @@
         this.type = 'ArrayExpression';
         this.elements = [];                 // [ Expression | null ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A new expression.
@@ -612,7 +652,8 @@
         this.callee = null;                 // Expression
         this.arguments = [];                // [ Expression | null ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
@@ -620,7 +661,8 @@
         this.type = 'ObjectExpression';
         this.properties = [];               // [ ObjectExpressionProp ]
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // Overture helper
@@ -641,7 +683,8 @@
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // A function expression.
@@ -654,7 +697,8 @@
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
         // @if LOCATIONS=true
-    this.loc = new SourceLocation();// @endif                    // SourceLocation | null
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
     }
 
     // Overture helper
@@ -805,8 +849,6 @@
     // we assign a variable name to it for quick comparing.
 
     var _in = new Binop(7);
-
-    //
     var _void = new Binop(0, {prefix:true});
     var _delete = new Binop(0, {prefix:true});
     var _typeof = new Binop(0, {prefix:true});

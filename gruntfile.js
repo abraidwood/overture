@@ -2,7 +2,7 @@
 module.exports = function(grunt) {
 
     grunt.initConfig({
-        preprocess : {
+        preprocess: {
             options: {
                 context : {
                     LOCATIONS: true
@@ -12,12 +12,19 @@ module.exports = function(grunt) {
                 src : 'overture-pre.js',
                 dest : 'overture-processed.js'
             }
+        },
+        watch: {
+            preprocessed: {
+                files: ['overture-pre.js'],
+                tasks: ['preprocess']
+            }
         }
     });
 
     grunt.loadNpmTasks('grunt-preprocess');
+    grunt.loadNpmTasks('grunt-contrib-watch');
 
     // Default task(s).
-    grunt.registerTask('default', ['preprocess']);
+    grunt.registerTask('default', ['watch', 'preprocess']);
 
 };
