@@ -6,6 +6,9 @@
     <link rel="stylesheet" href="perf.css">
 </head>
 <body>
+    <div class="invisible">
+        <img src="spinner.gif" />
+    </div>
     <h1>Overture/Acorn/Esprima/ZeParser2 speed comparison</h1>
 
     <div class="runner-box">
@@ -15,7 +18,7 @@
             <button disabled onclick="runBenchmarkTests()">Run ms/parse</button>
         </div>
 
-        <div id="resultsContainer"></div>
+        <div id="resultsContainer"><h2>Loading sources... please wait...</h2></div>
         <span>* Lines/sec measurements for minified sources are pretty meaningless</span>
     </div>
 

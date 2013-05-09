@@ -146,6 +146,7 @@ function init() {
     toggleTests(true);
 }
 
+drawTable();
 Q.all([loadParsers(), loadSources()]).then(init);
 drawOptionsTable();
 

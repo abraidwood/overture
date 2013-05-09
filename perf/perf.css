@@ -3,6 +3,21 @@ body {
     font-family: arial;
 }
 
+.invisible {
+    position:absolute;
+    visibility: hidden;
+    width:1px;
+    height:1px;
+    top:0;
+    left:0;
+    opacity:0;
+}
+
+#resultsContainer {
+    min-height: 345px;
+    min-width: 587px;
+}
+
 .runner-box {
     display: inline-block;
 }

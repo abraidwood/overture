@@ -69,7 +69,13 @@ function drawTable() {
         html += '<th class="parser-header" data-type="parser" data-index="'+parserIndex+'"><span>'+parser.name+'</span>'+generateSlideCheck('Run', parser.run)+generateSlideCheck('Profile');
     })
     sources.forEach(function(source, sourceIndex) {
-        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span><span class="filesize">('+Math.round(source.size/1024)+'kb)</span><div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
+        html+='<tr><th class="source-header" data-type="source" data-index="'+sourceIndex+'"><span>'+source.name+'</span>';
+        if(source.size !== 0) {
+            html+='<span class="filesize">('+Math.round(source.size/1024)+'kb)</span>';
+        } else {
+            html+='<img src="spinner.gif" />';
+        }
+        html+='<div>'+generateSlideCheck('Run', source.run)+generateSlideCheck('Profile')+'</div>';
         parsers.forEach(function(parser, parserIndex) {
             html += '<td id="cell_'+parserIndex+'_'+sourceIndex+'"><span></span><span class="smaller"></span>';
         });
