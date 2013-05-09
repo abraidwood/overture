@@ -758,8 +758,6 @@
     // we assign a variable name to it for quick comparing.
 
     var _in = new Binop(7);
-
-    //
     var _void = new Binop(0, {prefix:true});
     var _delete = new Binop(0, {prefix:true});
     var _typeof = new Binop(0, {prefix:true});
@@ -1034,8 +1032,6 @@
     // Called at the end of every token. Sets `tokEnd`, `tokVal`, and
     // `tokRegexpAllowed`, and skips the space after the token, so that
     // the next one's `tokStart` will point at the right position.
-
-        //if (options.locations) tokEndLoc = new line_loc_t();
     function finishToken(type, val) {
         tokEnd = tokPos;
         tokType = type;
@@ -1436,21 +1432,18 @@
 
     function readToken_forceRegexp() {
         tokStart = tokPos;
-//        if (options.locations) tokStartLoc = new line_loc_t();
-//        tokCommentsBefore = tokComments;
         return readRegexp();
     }
 
     function readToken() {
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
-    // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
+        // readToken is necessarily big to avoid inlining in v8!
 
- //     if (options.locations) tokStartLoc = new line_loc_t();
         if (tokPos >= inputLen) {
             finishToken(_eof);
         } else {
