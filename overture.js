@@ -6,7 +6,7 @@
 //
 // Git repositories for Overture are available at
 //
-//         https://github.com/abraidwood/overture.git
+//         [https://github.com/abraidwood/overture.git]
 //
 // Please use the [github bug tracker][ghbt] to report issues.
 //
@@ -23,8 +23,6 @@
 //
 //         http://marijnhaverbeke.nl/git/acorn
 //         https://github.com/marijnh/acorn.git
-//
-// Please use the [github bug tracker][ghbt] to report issues.
 //
 
 /* jshint -W053, strict:true, eqeqeq:true, quotmark:single, undef:true, unused:true, trailing:true  */
@@ -162,6 +160,7 @@
     // containing the tokens start and end line/column pairs.
 
     var tokStartLoc, tokEndLoc;
+    var tokCurLine = 0, tokLineStart = 0;
 
     // The type and value of the current token. Token types are objects,
     // named by variables against which they can be compared, and
@@ -225,7 +224,6 @@
     // By default, Reflect.parse() produces Node objects, which are plain JavaScript objects (i.e., their prototype derives from the standard Object prototype). All node types implement the following interface:
     function Node(type) {
         this.type = type || null;   // 'string'
-        this.loc = null;            // SourceLocation | null
     }
 
     // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
@@ -242,351 +240,141 @@
 
     // Each Position object consists of a line number (1-indexed) and a column number (0-indexed):
     function Position() {
-        this.line = 1;                      // number >= 1
-        this.column = 0;                    // number >= 0
+        this.line = tokCurLine;             // number >= 1
+        this.column = tokPos - tokLineStart;// number >= 0
     }
 
-    // An identifier. Note that an identifier may be an expression or a destructuring pattern.
-    function Identifier() {
-        this.type = 'Identifier';
-        this.loc = null;                    // SourceLocation | null
-        this.name = null;                   // string
-    }
+    // ### Programs
 
-    // A complete program source tree.
     function Program() {
         this.type = 'Program';
         this.body = [];                     // [ Statement ]
-        this.loc = null;                    // SourceLocation | null
     }
+    // A complete program source tree.
 
-    // A break statement.
-    function BreakStatement() {
-        this.type = 'BreakStatement';
-        this.label = null;                  // Identifier | null
-        this.loc = null;                    // SourceLocation | null
+    // ### Statements
+
+    function EmptyStatement() {
+        this.type = 'EmptyStatement';
     }
+    // An empty statement, i.e., a solitary semicolon.
 
-    // A continue statement.
-    function ContinueStatement() {
-        this.type = 'ContinueStatement';
-        this.label = null;                  // Identifier | null
-        this.loc = null;                    // SourceLocation | null
+    function BlockStatement() {
+        this.type = 'BlockStatement';
+        this.body = [];                     // [ Statement ]
     }
+    // A block statement, i.e., a sequence of statements surrounded by braces.
 
-    // A debugger statement.
-    // Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.
-    function DebuggerStatement() {
-        this.type = 'DebuggerStatement';
-        this.loc = null;                    // SourceLocation | null
+    function ExpressionStatement() {
+        this.type = 'ExpressionStatement';
+        this.expression = null;             // Expression
     }
+    // An expression statement, i.e., a statement consisting of a single expression.
 
-    // A while statement.
-    function DoWhileStatement() {
-        this.type = 'DoWhileStatement';
-        this.body = null;                   // Statement
-        this.test = null;                   // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An if statement.
     function IfStatement() {
         this.type = 'IfStatement';
         this.test = null;                   // Expression
         this.consequent = null;             // Statement
         this.alternate = null;              // Statement | null
-        this.loc = null;                    // SourceLocation | null
     }
+    // An if statement.
 
-    // A return statement.
-    function ReturnStatement() {
-        this.type = 'ReturnStatement';
-        this.argument = null;               // Expression | null
-        this.loc = null;                    // SourceLocation | null
+    function LabeledStatement() {
+        this.type = 'LabeledStatement';
+        this.label = null;                  // Identifier
+        this.body = null;                   // Statement
     }
+    // A labeled statement, i.e., a statement prefixed by a break/continue label.
 
-    // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
+    function BreakStatement() {
+        this.type = 'BreakStatement';
+        this.label = null;                  // Identifier | null
+    }
+    // A break statement.
+
+    function ContinueStatement() {
+        this.type = 'ContinueStatement';
+        this.label = null;                  // Identifier | null
+    }
+    // A continue statement.
+
+    function WithStatement() {
+        this.type = 'WithStatement';
+        this.object = null;                 // Expression
+        this.body = null;                   // Statement
+    }
+    // A with statement.
+
     function SwitchStatement() {
         this.type = 'SwitchStatement';
         this.discriminant = null;           // Expression
         this.cases = [];                    // [ SwitchCase ]
         this.lexical = false;               // boolean
-        this.loc = null;                    // SourceLocation | null
     }
+    // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
 
-    // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
-    function SwitchCase() {
-        this.type = 'SwitchCase';
-        this.test = null;                   // Expression | null
-        this.consequent = [];               // [ Statement ]
-        this.loc = null;                    // SourceLocation | null
+    function ReturnStatement() {
+        this.type = 'ReturnStatement';
+        this.argument = null;               // Expression | null
     }
+    // A return statement.
 
-    // A throw statement.
     function ThrowStatement() {
         this.type = 'ThrowStatement';
         this.argument = null;               // Expression
-        this.loc = null;                    // SourceLocation | null
     }
+    // A throw statement.
 
-    // A try statement.
-    // Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in overture)
     function TryStatement() {
         this.type = 'TryStatement';
         this.block = null;                  // BlockStatement
         this.handler = null;                // CatchClause | null
         //this.guardedHandlers = [];        // [ CatchClause ]
         this.finalizer = null;              // BlockStatement | null
-        this.loc = null;                    // SourceLocation | null
     }
-
-    // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
-    // Note: The guard expression is SpiderMonkey-specific. (and not implemented in overture)
-    function CatchClause() {
-        this.type = 'CatchClause';
-        this.param = null;                  // Pattern
-        //this.guard = null;                // Expression | null
-        this.body = null;                   // BlockStatement
-        this.loc = null;                    // SourceLocation | null
-    }
+    // A try statement.
+    // Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in overture)
 
     function WhileStatement() {
         this.type = 'WhileStatement';
         this.body = null;                   // Statement
         this.test = null;                   // Expression
-        this.loc = null;                    // SourceLocation | null
     }
+    // A while statement
 
-    // A with statement.
-    function WithStatement() {
-        this.type = 'WithStatement';
-        this.object = null;                 // Expression
+    function DoWhileStatement() {
+        this.type = 'DoWhileStatement';
         this.body = null;                   // Statement
-        this.loc = null;                    // SourceLocation | null
+        this.test = null;                   // Expression
     }
+    // A do/while statement.
 
-    // An empty statement, i.e., a solitary semicolon.
-    function EmptyStatement() {
-        this.type = 'EmptyStatement';
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A labeled statement, i.e., a statement prefixed by a break/continue label.
-    function LabeledStatement() {
-        this.type = 'LabeledStatement';
-        this.label = null;                  // Identifier
-        this.body = null;                   // Statement
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An expression statement, i.e., a statement consisting of a single expression.
-    function ExpressionStatement() {
-        this.type = 'ExpressionStatement';
-        this.expression = null;             // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A block statement, i.e., a sequence of statements surrounded by braces.
-    function BlockStatement() {
-        this.type = 'BlockStatement';
-        this.body = [];                     // [ Statement ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A for statement.
     function ForStatement() {
         this.type = 'ForStatement';
         this.init = null;                   // VariableDeclaration | Expression | null
         this.test = null;                   // Expression | null
         this.update = null;                 // Expression | null
         this.body = null;                   // Statement
-        this.loc = null;                    // SourceLocation | null
     }
+    // A for statement.
 
-    // A for/in statement, or, if each is true, a for each/in statement.
-    // Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)
     function ForInStatement() {
         this.type = 'ForInStatement';
         this.left = null;                   // VariableDeclaration |  Expression
         this.right = null;                  // Expression
         this.body = null;                   // Statement
-        this.loc = null;                    // SourceLocation | null
     }
+    // A for/in statement, or, if each is true, a for each/in statement.
+    // Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)
 
-    // A variable declaration, via one of var, let, or const.
-    function VariableDeclaration() {
-        this.type = 'VariableDeclaration';
-        this.declarations = [];             // [ VariableDeclarator ]
-        this.kind = 'var';                  // "var" | "let" | "const"
-        this.loc = null;                    // SourceLocation | null
+    function DebuggerStatement() {
+        this.type = 'DebuggerStatement';
     }
+    // A debugger statement.
+    // Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.
 
-    // A variable declarator.
-    // Note: The id field cannot be null.
-    // Note: let and const are SpiderMonkey-specific. (and not implemented in overture)
-    function VariableDeclarator() {
-        this.type = 'VariableDeclarator';
-        this.id = null;                     // Pattern
-        this.init = null;                   // Expression | null
-        this.loc = null;                    // SourceLocation | null
-    }
+    // ### Declarations
 
-    // A sequence expression, i.e., a comma-separated sequence of expressions.
-    function SequenceExpression() {
-        this.type = 'SequenceExpression';
-        this.expressions = [];              // [ Expression ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An assignment operator expression.
-    function AssignmentExpression() {
-        this.type = 'AssignmentExpression';
-        this.operator = null;               // AssignmentOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A conditional expression, i.e., a ternary ?/: expression.
-    function ConditionalExpression() {
-        this.type = 'ConditionalExpression';
-        this.test = null;                   // Expression
-        this.consequent = null;             // Expression
-        this.alternate = null;              // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A logical operator expression.
-    function LogicalExpression() {
-        this.type = 'LogicalExpression';
-        this.operator = null;               // LogicalOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A binary operator expression.
-    function BinaryExpression() {
-        this.type = 'BinaryExpression';
-        this.operator = null;               // BinaryOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An update (increment or decrement) operator expression.
-    function UpdateExpression() {
-        this.type = 'UpdateExpression';
-        this.operator = null;               // UpdateOperator
-        this.argument = null;               // Expression
-        this.prefix = true;                 // boolean
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A unary operator expression.
-    function UnaryExpression() {
-        this.type = 'UnaryExpression';
-        this.operator = null;               // UnaryOperator
-        this.argument = null;               // Expression
-        this.prefix = true;                 // boolean
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
-    // Note: "_dot" and "_bracketL" suffix is for overture performance
-    function MemberExpression_dot(b) {
-        this.type = 'MemberExpression';
-        this.object = b;                    // Expression
-        this.property = null;               // Identifier | Expression
-        this.computed = false;              // boolean
-        this.loc = null;                    // SourceLocation | null
-    }
-    function MemberExpression_bracketL(b) {
-        this.type = 'MemberExpression';
-        this.object = b;                    // Expression
-        this.property = null;               // Identifier | Expression
-        this.computed = true;               // boolean
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A function or method call expression.
-    function CallExpression(callee) {
-        this.type = 'CallExpression';
-        this.callee = callee;               // Expression
-        this.arguments = [];                // [ Expression | null ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A this expression.
-    function ThisExpression() {
-        this.type = 'ThisExpression';
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A literal token. Note that a literal can be an expression.
-    // Note: "_number", "_string", "_regexp", "_null", "_true", "_false" suffix is for overture performance
-    function Literal_number() {
-        this.type = 'Literal';
-        this.value = 0;                     // number
-        this.loc = null;                    // SourceLocation | null
-    }
-    function Literal_string() {
-        this.type = 'Literal';
-        this.value = '';                    // string
-        this.loc = null;                    // SourceLocation | null
-    }
-    function Literal_regexp() {
-        this.type = 'Literal';
-        this.value = null;                  // regexp
-        this.loc = null;                    // SourceLocation | null
-    }
-    function Literal_null() {
-        this.type = 'Literal';
-        this.value = null;                  // null
-        this.loc = null;                    // SourceLocation | null
-    }
-    function Literal_true() {
-        this.type = 'Literal';
-        this.value = true;                  // true
-        this.loc = null;                    // SourceLocation | null
-    }
-    function Literal_false() {
-        this.type = 'Literal';
-        this.value = false;                 // false
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An array expression.
-    function ArrayExpression() {
-        this.type = 'ArrayExpression';
-        this.elements = [];                 // [ Expression | null ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // A new expression.
-    function NewExpression() {
-        this.type = 'NewExpression';
-        this.callee = null;                 // Expression
-        this.arguments = [];                // [ Expression | null ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
-    function ObjectExpression() {
-        this.type = 'ObjectExpression';
-        this.properties = [];               // [ ObjectExpressionProp ]
-        this.loc = null;                    // SourceLocation | null
-    }
-
-    // Overture helper
-    function ObjectExpressionProp() {
-        this.key = null;                    // Literal | Identifier
-        this.value = null;                  // Expression
-        this.kind = 'init';                 // "init" | "get" | "set"
-    }
-
-    // A function declaration.
-    // Note: The id field cannot be null.
     function FunctionDeclaration() {
         this.type = 'FunctionDeclaration';
         this.id = null;                     // Identifier
@@ -595,10 +383,45 @@
         this.rest = null;                   // Identifier | null
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
-        this.loc = null;                    // SourceLocation | null
     }
+    // A function declaration.
+    // Note: The id field cannot be null.
 
-    // A function expression.
+    function VariableDeclaration() {
+        this.type = 'VariableDeclaration';
+        this.declarations = [];             // [ VariableDeclarator ]
+        this.kind = 'var';                  // "var" | "let" | "const"
+    }
+    // A variable declaration, via one of var, let, or const.
+
+    function VariableDeclarator() {
+        this.type = 'VariableDeclarator';
+        this.id = null;                     // Pattern
+        this.init = null;                   // Expression | null
+    }
+    // A variable declarator.
+    // Note: The id field cannot be null.
+    // Note: let and const are SpiderMonkey-specific. (and not implemented in overture)
+
+    // ### Expressions
+
+    function ThisExpression() {
+        this.type = 'ThisExpression';
+    }
+    // A this expression.
+
+    function ArrayExpression() {
+        this.type = 'ArrayExpression';
+        this.elements = [];                 // [ Expression | null ]
+    }
+    // An array expression.
+
+    function ObjectExpression() {
+        this.type = 'ObjectExpression';
+        this.properties = [];               // [ ObjectExpressionProp ]
+    }
+    // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
+
     function FunctionExpression() {
         this.type = 'FunctionExpression';
         this.id = null;                     // Identifier | null
@@ -607,8 +430,154 @@
         this.rest = null;                   // Identifier | null
         this.body = null;                   // BlockStatement | Expression
         this.expression = false;            // boolean
-        this.loc = null;                    // SourceLocation | null
     }
+    // A function expression.
+
+    function SequenceExpression() {
+        this.type = 'SequenceExpression';
+        this.expressions = [];              // [ Expression ]
+    }
+    // A sequence expression, i.e., a comma-separated sequence of expressions.
+
+    function UnaryExpression() {
+        this.type = 'UnaryExpression';
+        this.operator = null;               // UnaryOperator
+        this.argument = null;               // Expression
+        this.prefix = true;                 // boolean
+    }
+    // A unary operator expression.
+
+    function BinaryExpression() {
+        this.type = 'BinaryExpression';
+        this.operator = null;               // BinaryOperator
+        this.left = null;                   // Expression
+        this.right = null;                  // Expression
+    }
+    // A binary operator expression.
+
+    function AssignmentExpression() {
+        this.type = 'AssignmentExpression';
+        this.operator = null;               // AssignmentOperator
+        this.left = null;                   // Expression
+        this.right = null;                  // Expression
+    }
+    // An assignment operator expression.
+
+    function UpdateExpression() {
+        this.type = 'UpdateExpression';
+        this.operator = null;               // UpdateOperator
+        this.argument = null;               // Expression
+        this.prefix = true;                 // boolean
+    }
+    // An update (increment or decrement) operator expression.
+
+    function LogicalExpression() {
+        this.type = 'LogicalExpression';
+        this.operator = null;               // LogicalOperator
+        this.left = null;                   // Expression
+        this.right = null;                  // Expression
+    }
+    // A logical operator expression.
+
+    function ConditionalExpression() {
+        this.type = 'ConditionalExpression';
+        this.test = null;                   // Expression
+        this.consequent = null;             // Expression
+        this.alternate = null;              // Expression
+    }
+    // A conditional expression, i.e., a ternary ?/: expression.
+
+    function NewExpression() {
+        this.type = 'NewExpression';
+        this.callee = null;                 // Expression
+        this.arguments = [];                // [ Expression | null ]
+    }
+    // A new expression.
+
+    function CallExpression(callee) {
+        this.type = 'CallExpression';
+        this.callee = callee;               // Expression
+        this.arguments = [];                // [ Expression | null ]
+    }
+    // A function or method call expression.
+
+    // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
+    // Note: "_dot" and "_bracketL" suffix is for overture performance
+    function MemberExpression_dot(b) {
+        this.type = 'MemberExpression';
+        this.object = b;                    // Expression
+        this.property = null;               // Identifier | Expression
+        this.computed = false;              // boolean
+    }
+    function MemberExpression_bracketL(b) {
+        this.type = 'MemberExpression';
+        this.object = b;                    // Expression
+        this.property = null;               // Identifier | Expression
+        this.computed = true;               // boolean
+    }
+
+    // ### Clauses
+
+    function SwitchCase() {
+        this.type = 'SwitchCase';
+        this.test = null;                   // Expression | null
+        this.consequent = [];               // [ Statement ]
+    }
+    // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
+
+    function CatchClause() {
+        this.type = 'CatchClause';
+        this.param = null;                  // Pattern
+        //this.guard = null;                // Expression | null
+        this.body = null;                   // BlockStatement
+    }
+    // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
+    // Note: The guard expression is SpiderMonkey-specific. (and not implemented in overture)
+
+    // ### Miscellaneous
+
+    function Identifier() {
+        this.type = 'Identifier';
+        this.name = null;                   // string
+    }
+    // An identifier. Note that an identifier may be an expression or a destructuring pattern.
+
+    // A literal token. Note that a literal can be an expression.
+    // Note: "_number", "_string", "_regexp", "_null", "_true", "_false" suffix is for overture performance
+    function Literal_number() {
+        this.type = 'Literal';
+        this.value = 0;                     // number
+    }
+    function Literal_string() {
+        this.type = 'Literal';
+        this.value = '';                    // string
+    }
+    function Literal_regexp() {
+        this.type = 'Literal';
+        this.value = null;                  // regexp
+    }
+    function Literal_null() {
+        this.type = 'Literal';
+        this.value = null;                  // null
+    }
+    function Literal_true() {
+        this.type = 'Literal';
+        this.value = true;                  // true
+    }
+    function Literal_false() {
+        this.type = 'Literal';
+        this.value = false;                 // false
+    }
+
+
+
+    // Overture helper
+    function ObjectExpressionProp() {
+        this.key = null;                    // Literal | Identifier
+        this.value = null;                  // Expression
+        this.kind = 'init';                 // "init" | "get" | "set"
+    }
+
 
     // Overture helper
     function Label(name) {
@@ -1032,6 +1001,7 @@
     // Called at the end of every token. Sets `tokEnd`, `tokVal`, and
     // `tokRegexpAllowed`, and skips the space after the token, so that
     // the next one's `tokStart` will point at the right position.
+
     function finishToken(type, val) {
         tokEnd = tokPos;
         tokType = type;
@@ -1830,7 +1800,7 @@
     function readWord_checkReserved() {
         tokRegexpAllowed = false;
 
-        var word = readWord_n();
+        var word = readWord_simple();
         if (word.length > 1) {
             tokType = isKeyword(word);
             if (tokType === _name) {
@@ -1987,7 +1957,7 @@
         for (; i < leni; ++i) {
             var lab = labels[i];
             if (label === null || lab.name === label.name) {
-                if (lab.kind != null && (isBreak || lab.kind === str_loop)) break;
+                if (lab.kind !== null && (isBreak || lab.kind === str_loop)) break;
                 if (isBreak) break;
             }
         }
