@@ -1,5 +1,5 @@
 module.exports = {
-	overture: require('../overture.js'),
+	overture: require('../overture-locations.js'),
 
 	options: {
 		ecmaVersion: 5,
@@ -7,7 +7,7 @@ module.exports = {
 		allowTrailingCommas: true,
 		forbidReserved: false,
 		trackComments: false,
-		locations: false,
+		locations: true,
 		ranges: false,
 		program: null,
 		sourceFile: null

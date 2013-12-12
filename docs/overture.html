@@ -6,6 +6,17 @@
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <link rel="stylesheet" media="all" href="public/stylesheets/normalize.css" />
   <link rel="stylesheet" media="all" href="docco.css" />
+
+<script>
+  (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+  (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+  m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+  })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+  ga('create', 'UA-41696023-1', 'abraidwood.org');
+  ga('send', 'pageview');
+
+</script>
 </head>
 <body>
   <div class="container">
@@ -26,7 +37,7 @@
 license. The Unicode regexps (for identifiers and whitespace) were
 taken from <a href="http://esprima.org">Esprima</a> by Ariya Hidayat.</p>
 <p>Git repositories for Overture are available at</p>
-<pre><code>    https://github.com/abraidwood/overture.git</code></pre>
+<pre><code>    [https://github.com/abraidwood/overture.git]</code></pre>
 <p>Please use the <a href="https://github.com/abraidwood/overture/issues">github bug tracker</a> to report issues.</p>
 <p>Overture owes a lot of its code structure and initial work to
 Acorn:</p>
@@ -36,7 +47,6 @@ taken from <a href="http://esprima.org">Esprima</a> by Ariya Hidayat.</p>
 <p>Git repositories for Acorn are available at</p>
 <pre><code>    http://marijnhaverbeke.nl/git/acorn
     https://github.com/marijnh/acorn.git</code></pre>
-<p>Please use the <a href="https://github.com/abraidwood/overture/issues">github bug tracker</a> to report issues.</p>
 
         
           <div class='highlight'><pre><span class="comment">/* jshint -W053, strict:true, eqeqeq:true, quotmark:single, undef:true, unused:true, trailing:true  */</span>
@@ -231,7 +241,8 @@ communicate. We already saw the <code>options</code>, <code>input</code>, and
 containing the tokens start and end line/column pairs.</p>
 
         
-          <div class='highlight'><pre>    <span class="keyword">var</span> tokStartLoc, tokEndLoc;</pre></div>
+          <div class='highlight'><pre>    <span class="keyword">var</span> tokStartLoc, tokEndLoc;
+    <span class="keyword">var</span> tokCurLine = <span class="number">0</span>, tokLineStart = <span class="number">0</span>;</pre></div>
         
       
         
@@ -309,7 +320,8 @@ make them recognizeable when debugging.</p>
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Node</span><span class="params">(type)</span> {</span>
         <span class="keyword">this</span>.type = type || <span class="literal">null</span>;   <span class="comment">// 'string'</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;            <span class="comment">// SourceLocation | null</span>
+
+    <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();<span class="comment">// SourceLocation | null</span>
     }</pre></div>
         
       
@@ -332,80 +344,65 @@ make them recognizeable when debugging.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Position</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.line = <span class="number">1</span>;                      <span class="comment">// number &gt;= 1</span>
-        <span class="keyword">this</span>.column = <span class="number">0</span>;                    <span class="comment">// number &gt;= 0</span>
+        <span class="keyword">this</span>.line = tokCurLine;             <span class="comment">// number &gt;= 1</span>
+        <span class="keyword">this</span>.column = tokPos - tokLineStart;<span class="comment">// number &gt;= 0</span>
     }</pre></div>
         
       
         
-        <p>An identifier. Note that an identifier may be an expression or a destructuring pattern.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Identifier</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'Identifier'</span>;
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-        <span class="keyword">this</span>.name = <span class="literal">null</span>;                   <span class="comment">// string</span>
-    }</pre></div>
-        
-      
-        
-        <p>A complete program source tree.</p>
+        <h3>Programs</h3>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Program</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Program'</span>;
         <span class="keyword">this</span>.body = [];                     <span class="comment">// [ Statement ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A break statement.</p>
+        <p>A complete program source tree.</p>
+<h3>Statements</h3>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BreakStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'BreakStatement'</span>;
-        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">EmptyStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'EmptyStatement'</span>;
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A continue statement.</p>
+        <p>An empty statement, i.e., a solitary semicolon.</p>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ContinueStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ContinueStatement'</span>;
-        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BlockStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'BlockStatement'</span>;
+        <span class="keyword">this</span>.body = [];                     <span class="comment">// [ Statement ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A debugger statement.
-Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.</p>
+        <p>A block statement, i.e., a sequence of statements surrounded by braces.</p>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">DebuggerStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'DebuggerStatement'</span>;
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A while statement.</p>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ExpressionStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ExpressionStatement'</span>;
+        <span class="keyword">this</span>.expression = <span class="literal">null</span>;             <span class="comment">// Expression</span>
 
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">DoWhileStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'DoWhileStatement'</span>;
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>An if statement.</p>
+        <p>An expression statement, i.e., a statement consisting of a single expression.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">IfStatement</span><span class="params">()</span> {</span>
@@ -413,23 +410,68 @@ Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMo
         <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
         <span class="keyword">this</span>.consequent = <span class="literal">null</span>;             <span class="comment">// Statement</span>
         <span class="keyword">this</span>.alternate = <span class="literal">null</span>;              <span class="comment">// Statement | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A return statement.</p>
+        <p>An if statement.</p>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ReturnStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ReturnStatement'</span>;
-        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">LabeledStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'LabeledStatement'</span>;
+        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).</p>
+        <p>A labeled statement, i.e., a statement prefixed by a break/continue label.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BreakStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'BreakStatement'</span>;
+        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A break statement.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ContinueStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ContinueStatement'</span>;
+        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A continue statement.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">WithStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'WithStatement'</span>;
+        <span class="keyword">this</span>.object = <span class="literal">null</span>;                 <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A with statement.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">SwitchStatement</span><span class="params">()</span> {</span>
@@ -437,36 +479,40 @@ Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMo
         <span class="keyword">this</span>.discriminant = <span class="literal">null</span>;           <span class="comment">// Expression</span>
         <span class="keyword">this</span>.cases = [];                    <span class="comment">// [ SwitchCase ]</span>
         <span class="keyword">this</span>.lexical = <span class="literal">false</span>;               <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.</p>
+        <p>A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).</p>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">SwitchCase</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'SwitchCase'</span>;
-        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
-        <span class="keyword">this</span>.consequent = [];               <span class="comment">// [ Statement ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ReturnStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ReturnStatement'</span>;
+        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A throw statement.</p>
+        <p>A return statement.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ThrowStatement</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'ThrowStatement'</span>;
         <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A try statement.
-Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in overture)</p>
+        <p>A throw statement.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">TryStatement</span><span class="params">()</span> {</span>
@@ -480,13 +526,366 @@ Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in 
 
         
           <div class='highlight'><pre>        <span class="keyword">this</span>.finalizer = <span class="literal">null</span>;              <span class="comment">// BlockStatement | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
-Note: The guard expression is SpiderMonkey-specific. (and not implemented in overture)</p>
+        <p>A try statement.
+Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in overture)</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">WhileStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'WhileStatement'</span>;
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A while statement</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">DoWhileStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'DoWhileStatement'</span>;
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A do/while statement.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ForStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ForStatement'</span>;
+        <span class="keyword">this</span>.init = <span class="literal">null</span>;                   <span class="comment">// VariableDeclaration | Expression | null</span>
+        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
+        <span class="keyword">this</span>.update = <span class="literal">null</span>;                 <span class="comment">// Expression | null</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A for statement.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ForInStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ForInStatement'</span>;
+        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// VariableDeclaration |  Expression</span>
+        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A for/in statement, or, if each is true, a for each/in statement.
+Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">DebuggerStatement</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'DebuggerStatement'</span>;
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A debugger statement.
+Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.</p>
+<h3>Declarations</h3>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">FunctionDeclaration</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'FunctionDeclaration'</span>;
+        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Identifier</span>
+        <span class="keyword">this</span>.params = [];                   <span class="comment">// [ Pattern ]</span>
+        <span class="keyword">this</span>.defaults = [];                 <span class="comment">// [ Expression ]</span>
+        <span class="keyword">this</span>.rest = <span class="literal">null</span>;                   <span class="comment">// Identifier | null</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// BlockStatement | Expression</span>
+        <span class="keyword">this</span>.expression = <span class="literal">false</span>;            <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A function declaration.
+Note: The id field cannot be null.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">VariableDeclaration</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'VariableDeclaration'</span>;
+        <span class="keyword">this</span>.declarations = [];             <span class="comment">// [ VariableDeclarator ]</span>
+        <span class="keyword">this</span>.kind = <span class="string">'var'</span>;                  <span class="comment">// "var" | "let" | "const"</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A variable declaration, via one of var, let, or const.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">VariableDeclarator</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'VariableDeclarator'</span>;
+        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Pattern</span>
+        <span class="keyword">this</span>.init = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A variable declarator.
+Note: The id field cannot be null.
+Note: let and const are SpiderMonkey-specific. (and not implemented in overture)</p>
+<h3>Expressions</h3>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ThisExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ThisExpression'</span>;
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A this expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ArrayExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ArrayExpression'</span>;
+        <span class="keyword">this</span>.elements = [];                 <span class="comment">// [ Expression | null ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>An array expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ObjectExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ObjectExpression'</span>;
+        <span class="keyword">this</span>.properties = [];               <span class="comment">// [ ObjectExpressionProp ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value &quot;init&quot;; getters and setters have the kind values &quot;get&quot; and &quot;set&quot;, respectively.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">FunctionExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'FunctionExpression'</span>;
+        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Identifier | null</span>
+        <span class="keyword">this</span>.params = [];                   <span class="comment">// [ Pattern ]</span>
+        <span class="keyword">this</span>.defaults = [];                 <span class="comment">// [ Expression ]</span>
+        <span class="keyword">this</span>.rest = <span class="literal">null</span>;                   <span class="comment">// Identifier | null</span>
+        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// BlockStatement | Expression</span>
+        <span class="keyword">this</span>.expression = <span class="literal">false</span>;            <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A function expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">SequenceExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'SequenceExpression'</span>;
+        <span class="keyword">this</span>.expressions = [];              <span class="comment">// [ Expression ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A sequence expression, i.e., a comma-separated sequence of expressions.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">UnaryExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'UnaryExpression'</span>;
+        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// UnaryOperator</span>
+        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.prefix = <span class="literal">true</span>;                 <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A unary operator expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BinaryExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'BinaryExpression'</span>;
+        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// BinaryOperator</span>
+        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A binary operator expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">AssignmentExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'AssignmentExpression'</span>;
+        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// AssignmentOperator</span>
+        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>An assignment operator expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">UpdateExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'UpdateExpression'</span>;
+        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// UpdateOperator</span>
+        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.prefix = <span class="literal">true</span>;                 <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>An update (increment or decrement) operator expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">LogicalExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'LogicalExpression'</span>;
+        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// LogicalOperator</span>
+        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A logical operator expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ConditionalExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'ConditionalExpression'</span>;
+        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.consequent = <span class="literal">null</span>;             <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.alternate = <span class="literal">null</span>;              <span class="comment">// Expression</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A conditional expression, i.e., a ternary ?/: expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">NewExpression</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'NewExpression'</span>;
+        <span class="keyword">this</span>.callee = <span class="literal">null</span>;                 <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.arguments = [];                <span class="comment">// [ Expression | null ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A new expression.</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">CallExpression</span><span class="params">(callee)</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'CallExpression'</span>;
+        <span class="keyword">this</span>.callee = callee;               <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.arguments = [];                <span class="comment">// [ Expression | null ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A function or method call expression.</p>
+<p>A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
+Note: &quot;_dot&quot; and &quot;_bracketL&quot; suffix is for overture performance</p>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">MemberExpression_dot</span><span class="params">(b)</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'MemberExpression'</span>;
+        <span class="keyword">this</span>.object = b;                    <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.property = <span class="literal">null</span>;               <span class="comment">// Identifier | Expression</span>
+        <span class="keyword">this</span>.computed = <span class="literal">false</span>;              <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }
+    <span class="function"><span class="keyword">function</span> <span class="title">MemberExpression_bracketL</span><span class="params">(b)</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'MemberExpression'</span>;
+        <span class="keyword">this</span>.object = b;                    <span class="comment">// Expression</span>
+        <span class="keyword">this</span>.property = <span class="literal">null</span>;               <span class="comment">// Identifier | Expression</span>
+        <span class="keyword">this</span>.computed = <span class="literal">true</span>;               <span class="comment">// boolean</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <h3>Clauses</h3>
+
+        
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">SwitchCase</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'SwitchCase'</span>;
+        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
+        <span class="keyword">this</span>.consequent = [];               <span class="comment">// [ Statement ]</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
+    }</pre></div>
+        
+      
+        
+        <p>A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">CatchClause</span><span class="params">()</span> {</span>
@@ -499,327 +898,74 @@ Note: The guard expression is SpiderMonkey-specific. (and not implemented in ove
 
         
           <div class='highlight'><pre>        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// BlockStatement</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }
 
-    <span class="function"><span class="keyword">function</span> <span class="title">WhileStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'WhileStatement'</span>;
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>A with statement.</p>
+        <p>A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
+Note: The guard expression is SpiderMonkey-specific. (and not implemented in overture)</p>
+<h3>Miscellaneous</h3>
 
         
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">WithStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'WithStatement'</span>;
-        <span class="keyword">this</span>.object = <span class="literal">null</span>;                 <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Identifier</span><span class="params">()</span> {</span>
+        <span class="keyword">this</span>.type = <span class="string">'Identifier'</span>;
+        <span class="keyword">this</span>.name = <span class="literal">null</span>;                   <span class="comment">// string</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }</pre></div>
         
       
         
-        <p>An empty statement, i.e., a solitary semicolon.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">EmptyStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'EmptyStatement'</span>;
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A labeled statement, i.e., a statement prefixed by a break/continue label.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">LabeledStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'LabeledStatement'</span>;
-        <span class="keyword">this</span>.label = <span class="literal">null</span>;                  <span class="comment">// Identifier</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>An expression statement, i.e., a statement consisting of a single expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ExpressionStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ExpressionStatement'</span>;
-        <span class="keyword">this</span>.expression = <span class="literal">null</span>;             <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A block statement, i.e., a sequence of statements surrounded by braces.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BlockStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'BlockStatement'</span>;
-        <span class="keyword">this</span>.body = [];                     <span class="comment">// [ Statement ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A for statement.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ForStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ForStatement'</span>;
-        <span class="keyword">this</span>.init = <span class="literal">null</span>;                   <span class="comment">// VariableDeclaration | Expression | null</span>
-        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
-        <span class="keyword">this</span>.update = <span class="literal">null</span>;                 <span class="comment">// Expression | null</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A for/in statement, or, if each is true, a for each/in statement.
-Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ForInStatement</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ForInStatement'</span>;
-        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// VariableDeclaration |  Expression</span>
-        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// Statement</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A variable declaration, via one of var, let, or const.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">VariableDeclaration</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'VariableDeclaration'</span>;
-        <span class="keyword">this</span>.declarations = [];             <span class="comment">// [ VariableDeclarator ]</span>
-        <span class="keyword">this</span>.kind = <span class="string">'var'</span>;                  <span class="comment">// "var" | "let" | "const"</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A variable declarator.
-Note: The id field cannot be null.
-Note: let and const are SpiderMonkey-specific. (and not implemented in overture)</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">VariableDeclarator</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'VariableDeclarator'</span>;
-        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Pattern</span>
-        <span class="keyword">this</span>.init = <span class="literal">null</span>;                   <span class="comment">// Expression | null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A sequence expression, i.e., a comma-separated sequence of expressions.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">SequenceExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'SequenceExpression'</span>;
-        <span class="keyword">this</span>.expressions = [];              <span class="comment">// [ Expression ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>An assignment operator expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">AssignmentExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'AssignmentExpression'</span>;
-        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// AssignmentOperator</span>
-        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A conditional expression, i.e., a ternary ?/: expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ConditionalExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ConditionalExpression'</span>;
-        <span class="keyword">this</span>.test = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.consequent = <span class="literal">null</span>;             <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.alternate = <span class="literal">null</span>;              <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A logical operator expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">LogicalExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'LogicalExpression'</span>;
-        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// LogicalOperator</span>
-        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A binary operator expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">BinaryExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'BinaryExpression'</span>;
-        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// BinaryOperator</span>
-        <span class="keyword">this</span>.left = <span class="literal">null</span>;                   <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.right = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>An update (increment or decrement) operator expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">UpdateExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'UpdateExpression'</span>;
-        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// UpdateOperator</span>
-        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.prefix = <span class="literal">true</span>;                 <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A unary operator expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">UnaryExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'UnaryExpression'</span>;
-        <span class="keyword">this</span>.operator = <span class="literal">null</span>;               <span class="comment">// UnaryOperator</span>
-        <span class="keyword">this</span>.argument = <span class="literal">null</span>;               <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.prefix = <span class="literal">true</span>;                 <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
-Note: &quot;_dot&quot; and &quot;_bracketL&quot; suffix is for overture performance</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">MemberExpression_dot</span><span class="params">(b)</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'MemberExpression'</span>;
-        <span class="keyword">this</span>.object = b;                    <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.property = <span class="literal">null</span>;               <span class="comment">// Identifier | Expression</span>
-        <span class="keyword">this</span>.computed = <span class="literal">false</span>;              <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }
-    <span class="function"><span class="keyword">function</span> <span class="title">MemberExpression_bracketL</span><span class="params">(b)</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'MemberExpression'</span>;
-        <span class="keyword">this</span>.object = b;                    <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.property = <span class="literal">null</span>;               <span class="comment">// Identifier | Expression</span>
-        <span class="keyword">this</span>.computed = <span class="literal">true</span>;               <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A function or method call expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">CallExpression</span><span class="params">(callee)</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'CallExpression'</span>;
-        <span class="keyword">this</span>.callee = callee;               <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.arguments = [];                <span class="comment">// [ Expression | null ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A this expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ThisExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ThisExpression'</span>;
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A literal token. Note that a literal can be an expression.
+        <p>An identifier. Note that an identifier may be an expression or a destructuring pattern.</p>
+<p>A literal token. Note that a literal can be an expression.
 Note: &quot;_number&quot;, &quot;_string&quot;, &quot;_regexp&quot;, &quot;_null&quot;, &quot;_true&quot;, &quot;_false&quot; suffix is for overture performance</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">Literal_number</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="number">0</span>;                     <span class="comment">// number</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }
     <span class="function"><span class="keyword">function</span> <span class="title">Literal_string</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="string">''</span>;                    <span class="comment">// string</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }
     <span class="function"><span class="keyword">function</span> <span class="title">Literal_regexp</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="literal">null</span>;                  <span class="comment">// regexp</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }
     <span class="function"><span class="keyword">function</span> <span class="title">Literal_null</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="literal">null</span>;                  <span class="comment">// null</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }
     <span class="function"><span class="keyword">function</span> <span class="title">Literal_true</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="literal">true</span>;                  <span class="comment">// true</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
+
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
+
     }
     <span class="function"><span class="keyword">function</span> <span class="title">Literal_false</span><span class="params">()</span> {</span>
         <span class="keyword">this</span>.type = <span class="string">'Literal'</span>;
         <span class="keyword">this</span>.value = <span class="literal">false</span>;                 <span class="comment">// false</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>An array expression.</p>
 
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ArrayExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ArrayExpression'</span>;
-        <span class="keyword">this</span>.elements = [];                 <span class="comment">// [ Expression | null ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A new expression.</p>
+        <span class="keyword">this</span>.loc = <span class="keyword">new</span> SourceLocation();    <span class="comment">// SourceLocation | null</span>
 
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">NewExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'NewExpression'</span>;
-        <span class="keyword">this</span>.callee = <span class="literal">null</span>;                 <span class="comment">// Expression</span>
-        <span class="keyword">this</span>.arguments = [];                <span class="comment">// [ Expression | null ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value &quot;init&quot;; getters and setters have the kind values &quot;get&quot; and &quot;set&quot;, respectively.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">ObjectExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'ObjectExpression'</span>;
-        <span class="keyword">this</span>.properties = [];               <span class="comment">// [ ObjectExpressionProp ]</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
     }</pre></div>
         
       
@@ -831,39 +977,6 @@ Note: &quot;_number&quot;, &quot;_string&quot;, &quot;_regexp&quot;, &quot;_null
         <span class="keyword">this</span>.key = <span class="literal">null</span>;                    <span class="comment">// Literal | Identifier</span>
         <span class="keyword">this</span>.value = <span class="literal">null</span>;                  <span class="comment">// Expression</span>
         <span class="keyword">this</span>.kind = <span class="string">'init'</span>;                 <span class="comment">// "init" | "get" | "set"</span>
-    }</pre></div>
-        
-      
-        
-        <p>A function declaration.
-Note: The id field cannot be null.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">FunctionDeclaration</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'FunctionDeclaration'</span>;
-        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Identifier</span>
-        <span class="keyword">this</span>.params = [];                   <span class="comment">// [ Pattern ]</span>
-        <span class="keyword">this</span>.defaults = [];                 <span class="comment">// [ Expression ]</span>
-        <span class="keyword">this</span>.rest = <span class="literal">null</span>;                   <span class="comment">// Identifier | null</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// BlockStatement | Expression</span>
-        <span class="keyword">this</span>.expression = <span class="literal">false</span>;            <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
-    }</pre></div>
-        
-      
-        
-        <p>A function expression.</p>
-
-        
-          <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">FunctionExpression</span><span class="params">()</span> {</span>
-        <span class="keyword">this</span>.type = <span class="string">'FunctionExpression'</span>;
-        <span class="keyword">this</span>.id = <span class="literal">null</span>;                     <span class="comment">// Identifier | null</span>
-        <span class="keyword">this</span>.params = [];                   <span class="comment">// [ Pattern ]</span>
-        <span class="keyword">this</span>.defaults = [];                 <span class="comment">// [ Expression ]</span>
-        <span class="keyword">this</span>.rest = <span class="literal">null</span>;                   <span class="comment">// Identifier | null</span>
-        <span class="keyword">this</span>.body = <span class="literal">null</span>;                   <span class="comment">// BlockStatement | Expression</span>
-        <span class="keyword">this</span>.expression = <span class="literal">false</span>;            <span class="comment">// boolean</span>
-        <span class="keyword">this</span>.loc = <span class="literal">null</span>;                    <span class="comment">// SourceLocation | null</span>
     }</pre></div>
         
       
@@ -1349,10 +1462,12 @@ code point above 128.</p>
         <p>Called at the end of every token. Sets <code>tokEnd</code>, <code>tokVal</code>, and
 <code>tokRegexpAllowed</code>, and skips the space after the token, so that
 the next one&#39;s <code>tokStart</code> will point at the right position.</p>
-<p>if (options.locations) tokEndLoc = new line_loc_t();</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">finishToken</span><span class="params">(type, val)</span> {</span>
+
+        tokEndLoc = <span class="keyword">new</span> Position();
+
         tokEnd = tokPos;
         tokType = type;
         tokVal = val;
@@ -1366,10 +1481,22 @@ the next one&#39;s <code>tokStart</code> will point at the right position.</p>
 
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">skipBlockComment</span><span class="params">()</span> {</span>
+        <span class="keyword">var</span> start = tokPos;
         tokPos += <span class="number">2</span>;
         <span class="keyword">var</span> end = input.indexOf(<span class="string">'*/'</span>, tokPos);
         <span class="keyword">if</span> (end === -<span class="number">1</span>) raise(tokPos - <span class="number">2</span>, <span class="string">'Unterminated comment'</span>);
         tokPos = end + <span class="number">2</span>;
+
+        <span class="keyword">var</span> comment = input.slice(start + <span class="number">2</span>, end);
+        <span class="keyword">if</span> (options.locations) {
+            <span class="keyword">var</span> match = comment.match(lineBreak);
+            <span class="keyword">if</span>(match) {
+                tokCurLine += match.length;
+                <span class="keyword">var</span> lastMatch = match[match.length-<span class="number">1</span>];
+                tokLineStart = input.lastIndexOf(lastMatch,tokPos) + lastMatch.length;
+            }
+        }
+
     }</pre></div>
         
       
@@ -1415,6 +1542,13 @@ whitespace and comments.
             <span class="keyword">case</span> <span class="number">0xfeff</span>:
                 ++tokPos;
                 <span class="keyword">break</span>;
+            <span class="keyword">case</span> <span class="number">10</span>:
+                ++tokPos;
+
+                ++tokCurLine;
+                tokLineStart = tokPos;
+
+                <span class="keyword">break</span>;
             <span class="keyword">case</span> <span class="number">47</span>:
                 ch_ = input.charCodeAt(tokPos+<span class="number">1</span>);
                 <span class="keyword">if</span> (ch_ === <span class="number">42</span>) {skipBlockComment();}
@@ -1427,6 +1561,10 @@ whitespace and comments.
                 <span class="keyword">if</span> (ch_ === <span class="number">10</span>) {
                     ++tokPos;
                 }
+
+                ++tokCurLine;
+                tokLineStart = tokPos;
+
                 <span class="keyword">break</span>;
             <span class="keyword">default</span>:
                 <span class="keyword">if</span> (ch_ &gt;= <span class="number">0x2000</span> &amp;&amp; ch_ &lt;= <span class="number">0x200a</span>) {
@@ -1853,15 +1991,11 @@ number, or float.</p>
     }
 
     <span class="function"><span class="keyword">function</span> <span class="title">readToken_forceRegexp</span><span class="params">()</span> {</span>
-        tokStart = tokPos;</pre></div>
-        
-      
-        
-        <pre><code>   if (options.locations) tokStartLoc = new line_loc_t();
-   tokCommentsBefore = tokComments;</code></pre>
+        tokStart = tokPos;
 
-        
-          <div class='highlight'><pre>        <span class="keyword">return</span> readRegexp();
+        tokStartLoc = <span class="keyword">new</span> Position();
+
+        <span class="keyword">return</span> readRegexp();
     }
 
     <span class="function"><span class="keyword">function</span> <span class="title">readToken</span><span class="params">()</span> {</span></pre></div>
@@ -1875,10 +2009,12 @@ readToken is necessarily big to avoid inlining in v8!
 readToken is necessarily big to avoid inlining in v8!
 readToken is necessarily big to avoid inlining in v8!
 readToken is necessarily big to avoid inlining in v8!</p>
-<pre><code>if (options.locations) tokStartLoc = new line_loc_t();</code></pre>
 
         
-          <div class='highlight'><pre>        <span class="keyword">if</span> (tokPos &gt;= inputLen) {
+          <div class='highlight'><pre>        tokStartLoc = <span class="keyword">new</span> Position();
+
+
+        <span class="keyword">if</span> (tokPos &gt;= inputLen) {
             finishToken(_eof);
         } <span class="keyword">else</span> {
             <span class="keyword">var</span> code = input.charCodeAt(tokPos);
@@ -2113,8 +2249,11 @@ Reads the numeric side of \x[0-9]{2}, \u[0-9]{4}, \U[0-9]{8}, and 0x[0-9]+
             <span class="keyword">case</span> <span class="number">102</span>: rs_str+=<span class="string">'\f'</span>; <span class="keyword">break</span>;
             <span class="keyword">case</span> <span class="number">13</span>:
                 <span class="keyword">if</span> (input.charCodeAt(tokPos) === <span class="number">10</span>) ++tokPos;
-                <span class="keyword">break</span>;
             <span class="keyword">case</span> <span class="number">10</span>:
+
+                tokLineStart = tokPos;
+                ++tokCurLine;
+
                 <span class="keyword">break</span>;
             <span class="keyword">default</span>:
                 <span class="keyword">if</span> (ch &gt;= <span class="number">48</span> &amp; ch &lt;= <span class="number">55</span>) { <span class="comment">// 0-7 -&gt; possible octal</span>
@@ -2356,6 +2495,9 @@ precedence levels that JavaScript defines.</p>
         
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">next</span><span class="params">()</span> {</span>
         lastEnd = tokEnd;
+
+        lastEndLoc = tokEndLoc;
+
         readToken();
     }</pre></div>
         
@@ -2467,6 +2609,9 @@ to its body instead of creating a new node.</p>
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">parseTopLevel</span><span class="params">(program)</span> {</span>
         initTokenState();
         lastEnd = tokPos;
+
+        lastEndLoc = <span class="keyword">new</span> Position();
+
         inFunction = strict = <span class="literal">null</span>;
         labels = [];
         readToken();
@@ -2483,6 +2628,9 @@ to its body instead of creating a new node.</p>
                     node.body.push(stmt);
                 }
         }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -2528,6 +2676,9 @@ continue to.</p>
             }
         }
         check_label_exists(node.label, <span class="literal">true</span>, starttype);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2548,6 +2699,9 @@ continue to.</p>
             }
         }
         check_label_exists(node.label, <span class="literal">false</span>, starttype);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2560,6 +2714,9 @@ continue to.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> DebuggerStatement();
         next();
         semicolon();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2577,6 +2734,9 @@ continue to.</p>
         expect(_<span class="keyword">while</span>);
         node.test = parseParenExpression();
         semicolon();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2622,6 +2782,9 @@ a regular <code>for</code> loop.</p>
             }
         }
         labels.pop();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2650,6 +2813,9 @@ a regular <code>for</code> loop.</p>
         <span class="keyword">if</span> (eat(_<span class="keyword">else</span>) === <span class="literal">true</span>) {
             node.alternate = parseStatement();
         }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2669,6 +2835,9 @@ possibility to insert one.</p>
                 node.argument = parseExpression(<span class="literal">false</span>);
                 semicolon();
             }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
             <span class="keyword">return</span> node;
         } <span class="keyword">else</span> {
             raise(tokStart, <span class="string">'\'return\' outside of function'</span>);
@@ -2720,6 +2889,9 @@ adding statements to.</p>
             }
         }
         labels.pop();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2735,6 +2907,9 @@ adding statements to.</p>
             raise(lastEnd, <span class="string">'Illegal newline after throw'</span>);
         node.argument = parseExpression(<span class="literal">false</span>);
         semicolon();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2757,6 +2932,9 @@ adding statements to.</p>
                 raise(tokPos, <span class="string">'Binding '</span> + clause.param.name + <span class="string">' in strict mode'</span>);
             expect(_parenR);
             clause.body = parse_BlockStatement();
+
+            clause.loc.end = <span class="keyword">new</span> Position();
+
             node.handler = clause;
         }
 
@@ -2766,6 +2944,9 @@ adding statements to.</p>
 
         <span class="keyword">if</span> (node.handler === <span class="literal">null</span> &amp;&amp; node.finalizer === <span class="literal">null</span>)
             raise(tokPos, <span class="string">'Missing catch or finally clause'</span>);
+
+
+        node.loc.end = <span class="keyword">new</span> Position();;
 
         <span class="keyword">return</span> node;
     }</pre></div>
@@ -2779,6 +2960,9 @@ adding statements to.</p>
         next();
         <span class="keyword">var</span> node = parseVar();
         semicolon();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2794,6 +2978,9 @@ adding statements to.</p>
         labels.push(loopLabel);
         node.body = parseStatement();
         labels.pop();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2808,6 +2995,9 @@ adding statements to.</p>
         next();
         node.object = parseParenExpression();
         node.body = parseStatement();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2819,6 +3009,9 @@ adding statements to.</p>
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">parse_EmptyStatement</span><span class="params">()</span> {</span>
         <span class="keyword">var</span> node = <span class="keyword">new</span> EmptyStatement();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2858,6 +3051,9 @@ Identifier node, we switch to interpreting it as a label.</p>
             node.expression = expr;
             semicolon();
         }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
 
     }
@@ -2866,6 +3062,9 @@ Identifier node, we switch to interpreting it as a label.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> ExpressionStatement();
         node.expression = parseExpression(<span class="literal">false</span>);
         semicolon();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -2946,6 +3145,9 @@ function bodies).</p>
             }
         }
         <span class="keyword">if</span> (strict &amp;&amp; !oldStrict) setStrict(<span class="literal">false</span>);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2964,6 +3166,9 @@ expression.</p>
         <span class="keyword">if</span> (tokType !== _parenR) node.update = parseExpression(<span class="literal">false</span>);
         expect(_parenR);
         node.body = parseStatement();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2977,6 +3182,9 @@ expression.</p>
         node.right = parseExpression(<span class="literal">false</span>);
         expect(_parenR);
         node.body = parseStatement();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -2998,6 +3206,9 @@ expression.</p>
             node.declarations.push(decl);
             <span class="keyword">if</span> (eat(_comma) === <span class="literal">false</span>) <span class="keyword">break</span>;
         }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -3022,6 +3233,9 @@ or the <code>in</code> operator (in for loops initalization expressions).</p>
             <span class="keyword">while</span> (eat(_comma) === <span class="literal">true</span>) {
                 node.expressions.push(parseMaybeAssign(noIn));
             }
+
+            node.loc.end = <span class="keyword">new</span> Position();;
+
             <span class="keyword">return</span> node;
         }
         <span class="keyword">return</span> expr;
@@ -3042,6 +3256,9 @@ operators like <code>+=</code>.</p>
             next();
             node.right = parseMaybeAssign(noIn);
             checkLVal(left);
+
+            node.loc.end = <span class="keyword">new</span> Position();;
+
             <span class="keyword">return</span> node;
         }
         <span class="keyword">return</span> left;
@@ -3060,6 +3277,9 @@ operators like <code>+=</code>.</p>
             node.consequent = parseMaybeAssign(<span class="literal">false</span>);
             expect(_colon);
             node.alternate = parseMaybeAssign(noIn);
+
+            node.loc.end = <span class="keyword">new</span> Position();;
+
             <span class="keyword">return</span> node;
         }
         <span class="keyword">return</span> expr;
@@ -3092,6 +3312,9 @@ operator that has a lower precedence than the set it is parsing.</p>
             node.right = parseExprOp(parseMaybeUnary(), curTokType, noIn);
             <span class="keyword">return</span> parseExprOp(node, minTokType, noIn);
         }
+
+        left.loc.end = <span class="keyword">new</span> Position();
+
         <span class="keyword">return</span> left;
     }</pre></div>
         
@@ -3131,6 +3354,9 @@ operator that has a lower precedence than the set it is parsing.</p>
             }
             node = expr;
         }
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -3161,7 +3387,12 @@ operator that has a lower precedence than the set it is parsing.</p>
             parse_ExpressionList(node.arguments);
             <span class="keyword">return</span> parseSubscripts(node);
 
-        } <span class="keyword">else</span> <span class="keyword">return</span> base;
+        } <span class="keyword">else</span> {
+
+            base.loc.end = <span class="keyword">new</span> Position();
+
+            <span class="keyword">return</span> base;
+        }
     }
 
     <span class="function"><span class="keyword">function</span> <span class="title">parseSubscripts_nocalls</span><span class="params">(base)</span> {</span>
@@ -3177,7 +3408,12 @@ operator that has a lower precedence than the set it is parsing.</p>
             expect(_bracketR);
             <span class="keyword">return</span> parseSubscripts_nocalls(node);
 
-        } <span class="keyword">else</span> <span class="keyword">return</span> base;
+        } <span class="keyword">else</span> {
+
+            base.loc.end = <span class="keyword">new</span> Position();
+
+            <span class="keyword">return</span> base;
+        }
     }</pre></div>
         
       
@@ -3191,6 +3427,9 @@ or <code>{}</code>.</p>
           <div class='highlight'><pre>    <span class="function"><span class="keyword">function</span> <span class="title">parse_ThisExpression</span><span class="params">()</span> {</span>
         <span class="keyword">var</span> node = <span class="keyword">new</span> ThisExpression();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -3198,6 +3437,9 @@ or <code>{}</code>.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_number();
         node.value = tokVal;
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -3205,6 +3447,9 @@ or <code>{}</code>.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_string();
         node.value = tokVal;
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -3212,28 +3457,47 @@ or <code>{}</code>.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_regexp();
         node.value = tokVal;
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
     <span class="function"><span class="keyword">function</span> <span class="title">parse_Literal_Null</span><span class="params">()</span> {</span>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_null();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
     <span class="function"><span class="keyword">function</span> <span class="title">parse_Literal_True</span><span class="params">()</span> {</span>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_true();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
     <span class="function"><span class="keyword">function</span> <span class="title">parse_Literal_False</span><span class="params">()</span> {</span>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Literal_false();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
     <span class="function"><span class="keyword">function</span> <span class="title">parseExprAtom_parenL</span><span class="params">()</span> {</span>
+
+        <span class="keyword">var</span> tokStartLoc1 = tokStartLoc;
+
         next();
         <span class="keyword">var</span> val = parseExpression(<span class="literal">false</span>);
+
+        val.loc.start = tokStartLoc1;
+        val.loc.end = tokEndLoc;
+
         expect(_parenR);
         <span class="keyword">return</span> val;
     }
@@ -3241,6 +3505,9 @@ or <code>{}</code>.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> ArrayExpression();
         next();
         parse_ArrayExpressionList(node.elements);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -3283,6 +3550,9 @@ least, not without wrapping it in parentheses. Thus, it uses the</p>
         next();
         node.callee = parseSubscripts_nocalls(parseExprAtom(<span class="literal">false</span>));
         <span class="keyword">if</span> (eat(_parenL) === <span class="literal">true</span>) parse_ExpressionList(node.arguments);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -3367,6 +3637,9 @@ init properties are also not allowed to be repeated.</p>
             }
         }
         validateObjectProperties(node.properties);
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }</pre></div>
         
@@ -3415,6 +3688,9 @@ or <code>arguments</code>.</p>
                     raise(tokPos, <span class="string">'Argument name clash in strict mode'</span>);
             }
         }
+
+
+        node.loc.end = <span class="keyword">new</span> Position();;
 
         <span class="keyword">return</span> node;
     }</pre></div>
@@ -3470,6 +3746,9 @@ identifiers.</p>
         <span class="keyword">var</span> node = <span class="keyword">new</span> Identifier();
         node.name = tokType === _name ? tokVal : (!options.forbidReserved &amp;&amp; tokType.keyword) || unexpected();
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 
@@ -3481,6 +3760,9 @@ identifiers.</p>
             unexpected();
         }
         next();
+
+        node.loc.end = <span class="keyword">new</span> Position();;
+
         <span class="keyword">return</span> node;
     }
 });</pre></div>

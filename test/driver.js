@@ -54,7 +54,7 @@
         if (mis) return addPath(mis, i);
       }
     } else {
-      for (var prop in exp) {if(prop === 'loc' || prop === 'start' || prop === 'end' || prop === 'raw') {continue;}
+      for (var prop in exp) {if(/*prop === 'loc' || prop === 'start' || prop === 'end' || */prop === 'raw') {continue;}
         var mis = misMatch(exp[prop], act[prop]);
         if (mis) return addPath(mis, prop);
       }

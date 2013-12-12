@@ -1,11 +1,13 @@
 
 module.exports = function(grunt) {
 
+    var LOCATIONS = process.env.LOCATIONS === 'true';
+
     grunt.initConfig({
         preprocess: {
             options: {
                 context : {
-                    LOCATIONS: true
+                    LOCATIONS: LOCATIONS
                 }
             },
             js : {
@@ -25,6 +27,6 @@ module.exports = function(grunt) {
     grunt.loadNpmTasks('grunt-contrib-watch');
 
     // Default task(s).
-    grunt.registerTask('default', ['watch', 'preprocess']);
+    grunt.registerTask('default', ['preprocess']);
 
 };

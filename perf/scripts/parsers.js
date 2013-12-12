@@ -6,7 +6,7 @@ var parsers = [{
     ],
     author: 'Peter van der Zee',
     link: 'http://github.com/qfox/zeparser2/',
-    run: true,
+    run: false,
     options: {
         locations: { fixedVal: false },
         ranges: { fixedVal: false },
@@ -23,13 +23,13 @@ var parsers = [{
   },{
     name:'Overture',
     files: [
-      '../../overture.js'
+      '../../overture-locations.js'
     ],
     author: 'Alistair Braidwood',
     link: 'https://github.com/abraidwood/overture/',
     run: true,
     options: {
-        locations: { fixedVal: false },
+        locations: { fixedVal: true },
         ranges: { fixedVal: false },
         ecmaVersion: { choices:[3,5],defaultVal: 5 },
         strictSemicolons: { defaultVal: false, },
@@ -49,7 +49,7 @@ var parsers = [{
     link: 'https://github.com/marijnh/acorn/',
     run: true,
     options: {
-        locations: { defaultVal: false },
+        locations: { defaultVal: true },
         ranges: { defaultVal: false },
         ecmaVersion: { choices:[3,5],defaultVal: 5 },
         strictSemicolons: { defaultVal: false, },
@@ -70,7 +70,7 @@ var parsers = [{
     link: 'http://esprima.org/',
     run: true,
     options: {
-        loc: { defaultVal: false },
+        loc: { defaultVal: true },
         range: { defaultVal: false },
         ecmaVersion: { fixedVal: 5 },
         strictSemicolons: { fixedVal: false, },

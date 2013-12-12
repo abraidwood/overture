@@ -4,194 +4,9 @@
 if (typeof exports != "undefined") {
   var test = require("./driver.js").test;
   var testFail = require("./driver.js").testFail;
+  var testAssert = require("./driver.js").testAssert;
 }
 
-test("typeof/./", {
-    "type":"Program",
-    "start":0,
-    "end":9,
-    "body":[
-      {
-        "type":"ExpressionStatement",
-        "start":0,
-        "end":9,
-        "expression":{
-          "type":"UnaryExpression",
-          "start":0,
-          "end":9,
-          "operator":"typeof",
-          "prefix":true,
-          "argument":{
-            "type":"Literal",
-            "start":6,
-            "end":9,
-            "value":{},
-            "raw":"/./"
-        }
-      }
-    }
-  ]
-});
-
-test("if(1)/  foo/", {
-  type: "Program",
-  start: 0,
-  end: 12,
-  body: [
-    {
-      type: "IfStatement",
-      start: 0,
-      end: 12,
-      test: {
-        type: "Literal",
-        start: 3,
-        end: 4,
-        value: 1,
-        raw: "1"
-      },
-      consequent: {
-        type: "ExpressionStatement",
-        start: 5,
-        end: 12,
-        expression: {
-          type: "Literal",
-          start: 5,
-          end: 12,
-          raw: "/  foo/"
-        }
-      },
-      alternate: null
-    }
-  ]
-});
-
-test("4 + 5 << (6)", {
-  type: "Program",
-  body: [{
-    type: 'ExpressionStatement',
-    expression: {
-        type: 'BinaryExpression',
-        operator: '<<',
-        left: {
-            type: 'BinaryExpression',
-            operator: '+',
-            left: {
-                type: 'Literal',
-                value: 4,
-                raw: '4',
-                loc: {
-                    start: { line: 1, column: 0 },
-                    end: { line: 1, column: 1 }
-                }
-            },
-            right: {
-                type: 'Literal',
-                value: 5,
-                raw: '5',
-                loc: {
-                    start: { line: 1, column: 4 },
-                    end: { line: 1, column: 5 }
-                }
-            },
-            loc: {
-                start: { line: 1, column: 0 },
-                end: { line: 1, column: 5 }
-            }
-        },
-        right: {
-            type: 'Literal',
-            value: 6,
-            raw: '6',
-            loc: {
-                start: { line: 1, column: 10 },
-                end: { line: 1, column: 11 }
-            }
-        },
-        loc: {
-            start: { line: 1, column: 0 },
-            end: { line: 1, column: 12 }
-        }
-    },
-    loc: {
-        start: { line: 1, column: 0 },
-        end: { line: 1, column: 12 }
-    }
-  }]
-});
-
-test("42 /* the * answer */", {
-  type: "Program",
-  body: [{
-      type: 'ExpressionStatement',
-      expression: {
-          type: 'Literal',
-          value: 42,
-          raw: '42',
-          loc: {
-              start: { line: 1, column: 0 },
-              end: { line: 1, column: 2 }
-          }
-      },
-      loc: {
-          start: { line: 1, column: 0 },
-          end: { line: 1, column: 21 }
-      }
-  }]
-});
-test("(1) + (2  ) + 3", {
-  type: "Program",
-  body: [
-    {
-    type: 'ExpressionStatement',
-    expression: {
-        type: 'BinaryExpression',
-        operator: '+',
-        left: {
-            type: 'BinaryExpression',
-            operator: '+',
-            left: {
-                type: 'Literal',
-                value: 1,
-                raw: '1',
-                loc: {
-                    start: { line: 1, column: 1 },
-                    end: { line: 1, column: 2 }
-                }
-            },
-            right: {
-                type: 'Literal',
-                value: 2,
-                raw: '2',
-                loc: {
-                    start: { line: 1, column: 7 },
-                    end: { line: 1, column: 8 }
-                }
-            },
-            loc: {
-                start: { line: 1, column: 0 },
-                end: { line: 1, column: 11 }
-            }
-        },
-        right: {
-            type: 'Literal',
-            value: 3,
-            raw: '3',
-            loc: {
-                start: { line: 1, column: 14 },
-                end: { line: 1, column: 15 }
-            }
-        },
-        loc: {
-            start: { line: 1, column: 0 },
-            end: { line: 1, column: 15 }
-        }
-    },
-    loc: {
-        start: { line: 1, column: 0 },
-        end: { line: 1, column: 15 }
-    }
-  }]
-});
 test("this\n", {
   type: "Program",
   body: [
@@ -6135,92 +5950,7 @@ test("0x0", {
   }
 });
 
-test("0x0;", {
-  type: "Program",
-  body: [
-    {
-      type: "ExpressionStatement",
-      expression: {
-        type: "Literal",
-        value: 0,
-        loc: {
-          start: {
-            line: 1,
-            column: 0
-          },
-          end: {
-            line: 1,
-            column: 3
-          }
-        }
-      },
-      loc: {
-        start: {
-          line: 1,
-          column: 0
-        },
-        end: {
-          line: 1,
-          column: 3
-        }
-      }
-    }
-  ],
-  loc: {
-    start: {
-      line: 1,
-      column: 0
-    },
-    end: {
-      line: 1,
-      column: 3
-    }
-  }
-});
 test("0e+100", {
-  type: "Program",
-  body: [
-    {
-      type: "ExpressionStatement",
-      expression: {
-        type: "Literal",
-        value: 0,
-        loc: {
-          start: {
-            line: 1,
-            column: 0
-          },
-          end: {
-            line: 1,
-            column: 6
-          }
-        }
-      },
-      loc: {
-        start: {
-          line: 1,
-          column: 0
-        },
-        end: {
-          line: 1,
-          column: 6
-        }
-      }
-    }
-  ],
-  loc: {
-    start: {
-      line: 1,
-      column: 0
-    },
-    end: {
-      line: 1,
-      column: 6
-    }
-  }
-});
-
-test("0e+100 ", {
   type: "Program",
   body: [
     {
@@ -16485,7 +16215,7 @@ test("var x, y;", {
         },
         end: {
           line: 1,
-          column: 8
+          column: 9
         }
       }
     }
@@ -17334,92 +17064,6 @@ test("a\\u0061", {
   }
 });
 
-test("\\u0061a", {
-  type: "Program",
-  body: [
-    {
-      type: "ExpressionStatement",
-      expression: {
-        type: "Identifier",
-        name: "aa",
-        loc: {
-          start: {
-            line: 1,
-            column: 0
-          },
-          end: {
-            line: 1,
-            column: 7
-          }
-        }
-      },
-      loc: {
-        start: {
-          line: 1,
-          column: 0
-        },
-        end: {
-          line: 1,
-          column: 7
-        }
-      }
-    }
-  ],
-  loc: {
-    start: {
-      line: 1,
-      column: 0
-    },
-    end: {
-      line: 1,
-      column: 7
-    }
-  }
-});
-
-test("\\u0061a ", {
-  type: "Program",
-  body: [
-    {
-      type: "ExpressionStatement",
-      expression: {
-        type: "Identifier",
-        name: "aa",
-        loc: {
-          start: {
-            line: 1,
-            column: 0
-          },
-          end: {
-            line: 1,
-            column: 7
-          }
-        }
-      },
-      loc: {
-        start: {
-          line: 1,
-          column: 0
-        },
-        end: {
-          line: 1,
-          column: 7
-        }
-      }
-    }
-  ],
-  loc: {
-    start: {
-      line: 1,
-      column: 0
-    },
-    end: {
-      line: 1,
-      column: 7
-    }
-  }
-});
-
 test("if (morning) goodMorning()", {
   type: "Program",
   body: [
@@ -17663,7 +17307,7 @@ test("if (morning) var x = 0;", {
           },
           end: {
             line: 1,
-            column: 22
+            column: 23
           }
         }
       },
@@ -22176,46 +21820,48 @@ test("try { } catch (e) { }", {
         }
       },
       handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "e",
-          loc: {
-            start: {
-              line: 1,
-              column: 15
-            },
-            end: {
-              line: 1,
-              column: 16
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "e",
+            loc: {
+              start: {
+                line: 1,
+                column: 15
+              },
+              end: {
+                line: 1,
+                column: 16
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [],
+          },
+//          guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [],
+            loc: {
+              start: {
+                line: 1,
+                column: 18
+              },
+              end: {
+                line: 1,
+                column: 21
+              }
+            }
+          },
           loc: {
             start: {
               line: 1,
-              column: 18
+              column: 8
             },
             end: {
               line: 1,
               column: 21
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 8
-          },
-          end: {
-            line: 1,
-            column: 21
-          }
         }
-      },
+      ,
       finalizer: null,
       loc: {
         start: {
@@ -22260,47 +21906,50 @@ test("try { } catch (eval) { }", {
           }
         }
       },
-      handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "eval",
-          loc: {
-            start: {
-              line: 1,
-              column: 15
-            },
-            end: {
-              line: 1,
-              column: 19
+      handler:
+        {
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "eval",
+            loc: {
+              start: {
+                line: 1,
+                column: 15
+              },
+              end: {
+                line: 1,
+                column: 19
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [],
+          },
+//          guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [],
+            loc: {
+              start: {
+                line: 1,
+                column: 21
+              },
+              end: {
+                line: 1,
+                column: 24
+              }
+            }
+          },
           loc: {
             start: {
               line: 1,
-              column: 21
+              column: 8
             },
             end: {
               line: 1,
               column: 24
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 8
-          },
-          end: {
-            line: 1,
-            column: 24
-          }
         }
-      },
+      ,
       finalizer: null,
       loc: {
         start: {
@@ -22345,47 +21994,50 @@ test("try { } catch (arguments) { }", {
           }
         }
       },
-      handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "arguments",
-          loc: {
-            start: {
-              line: 1,
-              column: 15
-            },
-            end: {
-              line: 1,
-              column: 24
+      handler:
+        {
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "arguments",
+            loc: {
+              start: {
+                line: 1,
+                column: 15
+              },
+              end: {
+                line: 1,
+                column: 24
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [],
+          },
+//          guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [],
+            loc: {
+              start: {
+                line: 1,
+                column: 26
+              },
+              end: {
+                line: 1,
+                column: 29
+              }
+            }
+          },
           loc: {
             start: {
               line: 1,
-              column: 26
+              column: 8
             },
             end: {
               line: 1,
               column: 29
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 8
-          },
-          end: {
-            line: 1,
-            column: 29
-          }
         }
-      },
+      ,
       finalizer: null,
       loc: {
         start: {
@@ -22430,32 +22082,61 @@ test("try { } catch (e) { say(e) }", {
           }
         }
       },
-      handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "e",
-          loc: {
-            start: {
-              line: 1,
-              column: 15
-            },
-            end: {
-              line: 1,
-              column: 16
+      handler:
+        {
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "e",
+            loc: {
+              start: {
+                line: 1,
+                column: 15
+              },
+              end: {
+                line: 1,
+                column: 16
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [
-            {
-              type: "ExpressionStatement",
-              expression: {
-                type: "CallExpression",
-                callee: {
-                  type: "Identifier",
-                  name: "say",
+          },
+          // guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "ExpressionStatement",
+                expression: {
+                  type: "CallExpression",
+                  callee: {
+                    type: "Identifier",
+                    name: "say",
+                    loc: {
+                      start: {
+                        line: 1,
+                        column: 20
+                      },
+                      end: {
+                        line: 1,
+                        column: 23
+                      }
+                    }
+                  },
+                  arguments: [
+                    {
+                      type: "Identifier",
+                      name: "e",
+                      loc: {
+                        start: {
+                          line: 1,
+                          column: 24
+                        },
+                        end: {
+                          line: 1,
+                          column: 25
+                        }
+                      }
+                    }
+                  ],
                   loc: {
                     start: {
                       line: 1,
@@ -22463,26 +22144,10 @@ test("try { } catch (e) { say(e) }", {
                     },
                     end: {
                       line: 1,
-                      column: 23
+                      column: 26
                     }
                   }
                 },
-                arguments: [
-                  {
-                    type: "Identifier",
-                    name: "e",
-                    loc: {
-                      start: {
-                        line: 1,
-                        column: 24
-                      },
-                      end: {
-                        line: 1,
-                        column: 25
-                      }
-                    }
-                  }
-                ],
                 loc: {
                   start: {
                     line: 1,
@@ -22493,41 +22158,31 @@ test("try { } catch (e) { say(e) }", {
                     column: 26
                   }
                 }
+              }
+            ],
+            loc: {
+              start: {
+                line: 1,
+                column: 18
               },
-              loc: {
-                start: {
-                  line: 1,
-                  column: 20
-                },
-                end: {
-                  line: 1,
-                  column: 26
-                }
+              end: {
+                line: 1,
+                column: 28
               }
             }
-          ],
+          },
           loc: {
             start: {
               line: 1,
-              column: 18
+              column: 8
             },
             end: {
               line: 1,
               column: 28
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 8
-          },
-          end: {
-            line: 1,
-            column: 28
-          }
         }
-      },
+      ,
       finalizer: null,
       loc: {
         start: {
@@ -22729,32 +22384,61 @@ test("try { doThat(); } catch (e) { say(e) }", {
           }
         }
       },
-      handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "e",
-          loc: {
-            start: {
-              line: 1,
-              column: 25
-            },
-            end: {
-              line: 1,
-              column: 26
+      handler:
+        {
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "e",
+            loc: {
+              start: {
+                line: 1,
+                column: 25
+              },
+              end: {
+                line: 1,
+                column: 26
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [
-            {
-              type: "ExpressionStatement",
-              expression: {
-                type: "CallExpression",
-                callee: {
-                  type: "Identifier",
-                  name: "say",
+          },
+          // guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "ExpressionStatement",
+                expression: {
+                  type: "CallExpression",
+                  callee: {
+                    type: "Identifier",
+                    name: "say",
+                    loc: {
+                      start: {
+                        line: 1,
+                        column: 30
+                      },
+                      end: {
+                        line: 1,
+                        column: 33
+                      }
+                    }
+                  },
+                  arguments: [
+                    {
+                      type: "Identifier",
+                      name: "e",
+                      loc: {
+                        start: {
+                          line: 1,
+                          column: 34
+                        },
+                        end: {
+                          line: 1,
+                          column: 35
+                        }
+                      }
+                    }
+                  ],
                   loc: {
                     start: {
                       line: 1,
@@ -22762,26 +22446,10 @@ test("try { doThat(); } catch (e) { say(e) }", {
                     },
                     end: {
                       line: 1,
-                      column: 33
+                      column: 36
                     }
                   }
                 },
-                arguments: [
-                  {
-                    type: "Identifier",
-                    name: "e",
-                    loc: {
-                      start: {
-                        line: 1,
-                        column: 34
-                      },
-                      end: {
-                        line: 1,
-                        column: 35
-                      }
-                    }
-                  }
-                ],
                 loc: {
                   start: {
                     line: 1,
@@ -22792,41 +22460,31 @@ test("try { doThat(); } catch (e) { say(e) }", {
                     column: 36
                   }
                 }
+              }
+            ],
+            loc: {
+              start: {
+                line: 1,
+                column: 28
               },
-              loc: {
-                start: {
-                  line: 1,
-                  column: 30
-                },
-                end: {
-                  line: 1,
-                  column: 36
-                }
+              end: {
+                line: 1,
+                column: 38
               }
             }
-          ],
+          },
           loc: {
             start: {
               line: 1,
-              column: 28
+              column: 18
             },
             end: {
               line: 1,
               column: 38
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 18
-          },
-          end: {
-            line: 1,
-            column: 38
-          }
         }
-      },
+      ,
       finalizer: null,
       loc: {
         start: {
@@ -22913,32 +22571,61 @@ test("try { doThat(); } catch (e) { say(e) } finally { cleanup(stuff) }", {
           }
         }
       },
-      handler: {
-        type: "CatchClause",
-        param: {
-          type: "Identifier",
-          name: "e",
-          loc: {
-            start: {
-              line: 1,
-              column: 25
-            },
-            end: {
-              line: 1,
-              column: 26
+      handler:
+        {
+          type: "CatchClause",
+          param: {
+            type: "Identifier",
+            name: "e",
+            loc: {
+              start: {
+                line: 1,
+                column: 25
+              },
+              end: {
+                line: 1,
+                column: 26
+              }
             }
-          }
-        },
-        body: {
-          type: "BlockStatement",
-          body: [
-            {
-              type: "ExpressionStatement",
-              expression: {
-                type: "CallExpression",
-                callee: {
-                  type: "Identifier",
-                  name: "say",
+          },
+          // guard: null,
+          body: {
+            type: "BlockStatement",
+            body: [
+              {
+                type: "ExpressionStatement",
+                expression: {
+                  type: "CallExpression",
+                  callee: {
+                    type: "Identifier",
+                    name: "say",
+                    loc: {
+                      start: {
+                        line: 1,
+                        column: 30
+                      },
+                      end: {
+                        line: 1,
+                        column: 33
+                      }
+                    }
+                  },
+                  arguments: [
+                    {
+                      type: "Identifier",
+                      name: "e",
+                      loc: {
+                        start: {
+                          line: 1,
+                          column: 34
+                        },
+                        end: {
+                          line: 1,
+                          column: 35
+                        }
+                      }
+                    }
+                  ],
                   loc: {
                     start: {
                       line: 1,
@@ -22946,26 +22633,10 @@ test("try { doThat(); } catch (e) { say(e) } finally { cleanup(stuff) }", {
                     },
                     end: {
                       line: 1,
-                      column: 33
+                      column: 36
                     }
                   }
                 },
-                arguments: [
-                  {
-                    type: "Identifier",
-                    name: "e",
-                    loc: {
-                      start: {
-                        line: 1,
-                        column: 34
-                      },
-                      end: {
-                        line: 1,
-                        column: 35
-                      }
-                    }
-                  }
-                ],
                 loc: {
                   start: {
                     line: 1,
@@ -22976,41 +22647,31 @@ test("try { doThat(); } catch (e) { say(e) } finally { cleanup(stuff) }", {
                     column: 36
                   }
                 }
+              }
+            ],
+            loc: {
+              start: {
+                line: 1,
+                column: 28
               },
-              loc: {
-                start: {
-                  line: 1,
-                  column: 30
-                },
-                end: {
-                  line: 1,
-                  column: 36
-                }
+              end: {
+                line: 1,
+                column: 38
               }
             }
-          ],
+          },
           loc: {
             start: {
               line: 1,
-              column: 28
+              column: 18
             },
             end: {
               line: 1,
               column: 38
             }
           }
-        },
-        loc: {
-          start: {
-            line: 1,
-            column: 18
-          },
-          end: {
-            line: 1,
-            column: 38
-          }
         }
-      },
+      ,
       finalizer: {
         type: "BlockStatement",
         body: [
@@ -24024,7 +23685,7 @@ test("var hi = function() { sayHi() };", {
         },
         end: {
           line: 1,
-          column: 31
+          column: 32
         }
       }
     }
@@ -24125,7 +23786,7 @@ test("var hi = function eval() { };", {
         },
         end: {
           line: 1,
-          column: 28
+          column: 29
         }
       }
     }
@@ -24226,7 +23887,7 @@ test("var hi = function arguments() { };", {
         },
         end: {
           line: 1,
-          column: 33
+          column: 34
         }
       }
     }
@@ -24369,7 +24030,7 @@ test("var hello = function hi() { sayHi() };", {
         },
         end: {
           line: 1,
-          column: 37
+          column: 38
         }
       }
     }
@@ -24687,7 +24348,7 @@ test("var x /* comment */;", {
         },
         end: {
           line: 1,
-          column: 5
+          column: 20
         }
       }
     }
@@ -26026,8 +25687,6 @@ test("", {
 
 test("foo: if (true) break foo;", {
   type: "Program",
-  start: 0,
-  end: 25,
   loc: {
     start: {
       line: 1,
@@ -26041,8 +25700,6 @@ test("foo: if (true) break foo;", {
   body: [
     {
       type: "LabeledStatement",
-      start: 0,
-      end: 25,
       loc: {
         start: {
           line: 1,
@@ -26055,8 +25712,6 @@ test("foo: if (true) break foo;", {
       },
       body: {
         type: "IfStatement",
-        start: 5,
-        end: 25,
         loc: {
           start: {
             line: 1,
@@ -26069,8 +25724,6 @@ test("foo: if (true) break foo;", {
         },
         test: {
           type: "Literal",
-          start: 9,
-          end: 13,
           loc: {
             start: {
               line: 1,
@@ -26085,8 +25738,6 @@ test("foo: if (true) break foo;", {
         },
         consequent: {
           type: "BreakStatement",
-          start: 15,
-          end: 25,
           loc: {
             start: {
               line: 1,
@@ -26099,8 +25750,6 @@ test("foo: if (true) break foo;", {
           },
           label: {
             type: "Identifier",
-            start: 21,
-            end: 24,
             loc: {
               start: {
                 line: 1,
@@ -26118,8 +25767,6 @@ test("foo: if (true) break foo;", {
       },
       label: {
         type: "Identifier",
-        start: 0,
-        end: 3,
         loc: {
           start: {
             line: 1,
@@ -26136,105 +25783,92 @@ test("foo: if (true) break foo;", {
   ]
 });
 
-test("(function () { 'use strict'; '\0'; }())", {
+test("(function () {\n 'use strict';\n '\0';\n}())", {
   type: "Program",
-  start: 0,
-  end: 38,
   loc: {
     start: {
       line: 1,
       column: 0
     },
     end: {
-      line: 1,
-      column: 38
+      line: 4,
+      column: 4
     }
   },
   body: [
     {
       type: "ExpressionStatement",
-      start: 0,
-      end: 38,
       loc: {
         start: {
           line: 1,
           column: 0
         },
         end: {
-          line: 1,
-          column: 38
+          line: 4,
+          column: 4
         }
       },
       expression: {
         type: "CallExpression",
-        start: 0,
         loc: {
           start: {
             line: 1,
             column: 0
           },
           end: {
-            line: 1,
-            column: 38
+            line: 4,
+            column: 4
           }
         },
         callee: {
           type: "FunctionExpression",
-          start: 1,
-          end: 35,
           loc: {
             start: {
               line: 1,
               column: 1
             },
             end: {
-              line: 1,
-              column: 35
+              line: 4,
+              column: 1
             }
           },
           id: null,
           params: [],
           body: {
             type: "BlockStatement",
-            start: 13,
-            end: 35,
             loc: {
               start: {
                 line: 1,
                 column: 13
               },
               end: {
-                line: 1,
-                column: 35
+                line: 4,
+                column: 1
               }
             },
             body: [
               {
                 type: "ExpressionStatement",
-                start: 15,
-                end: 28,
                 loc: {
                   start: {
-                    line: 1,
-                    column: 15
+                    line: 2,
+                    column: 1
                   },
                   end: {
-                    line: 1,
-                    column: 28
+                    line: 2,
+                    column: 14
                   }
                 },
                 expression: {
                   type: "Literal",
-                  start: 15,
-                  end: 27,
                   loc: {
                     start: {
-                      line: 1,
-                      column: 15
+                      line: 2,
+                      column: 1
                     },
                     end: {
-                      line: 1,
-                      column: 27
+                      line: 2,
+                      column: 13
                     }
                   },
                   value: "use strict"
@@ -26242,30 +25876,26 @@ test("(function () { 'use strict'; '\0'; }())", {
               },
               {
                 type: "ExpressionStatement",
-                start: 29,
-                end: 33,
                 loc: {
                   start: {
-                    line: 1,
-                    column: 29
+                    line: 3,
+                    column: 1
                   },
                   end: {
-                    line: 1,
-                    column: 33
+                    line: 3,
+                    column: 5
                   }
                 },
                 expression: {
                   type: "Literal",
-                  start: 29,
-                  end: 32,
                   loc: {
                     start: {
-                      line: 1,
-                      column: 29
+                      line: 3,
+                      column: 1
                     },
                     end: {
-                      line: 1,
-                      column: 32
+                      line: 3,
+                      column: 4
                     }
                   },
                   value: "\u0000"
@@ -26274,8 +25904,7 @@ test("(function () { 'use strict'; '\0'; }())", {
             ]
           }
         },
-        arguments: [],
-        end: 38
+        arguments: []
       }
     }
   ]
@@ -26283,43 +25912,50 @@ test("(function () { 'use strict'; '\0'; }())", {
 
 test("123..toString(10)", {
   type: "Program",
-  start: 0,
-  end: 17,
   body: [
     {
       type: "ExpressionStatement",
-      start: 0,
-      end: 17,
       expression: {
         type: "CallExpression",
-        start: 0,
         callee: {
           type: "MemberExpression",
-          start: 0,
           object: {
             type: "Literal",
-            start: 0,
-            end: 4,
             value: 123
           },
           property: {
             type: "Identifier",
-            start: 5,
-            end: 13,
             name: "toString"
           },
           computed: false,
-          end: 13
         },
         arguments: [
           {
             type: "Literal",
-            start: 14,
-            end: 16,
             value: 10
           }
         ],
-        end: 17
+      }
+    }
+  ]
+});
+
+test("123.+2", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "BinaryExpression",
+        left: {
+          type: "Literal",
+          value: 123
+        },
+        operator: "+",
+        right: {
+          type: "Literal",
+          value: 2
+        },
       }
     }
   ]
@@ -26327,28 +25963,18 @@ test("123..toString(10)", {
 
 test("a\u2028b", {
   type: "Program",
-  start: 0,
-  end: 3,
   body: [
     {
       type: "ExpressionStatement",
-      start: 0,
-      end: 1,
       expression: {
         type: "Identifier",
-        start: 0,
-        end: 1,
         name: "a"
       }
     },
     {
       type: "ExpressionStatement",
-      start: 2,
-      end: 3,
       expression: {
         type: "Identifier",
-        start: 2,
-        end: 3,
         name: "b"
       }
     }
@@ -26404,12 +26030,43 @@ test("foo: 10; foo: 20;", {
   ]
 });
 
+test("if(1)/  foo/", {
+  type: "Program",
+  body: [
+    {
+      type: "IfStatement",
+      test: {
+        type: "Literal",
+        value: 1
+      },
+      consequent: {
+        type: "ExpressionStatement",
+        expression: {
+          type: "Literal"
+        }
+      },
+      alternate: null
+    }
+  ]
+});
+
+test("price_9̶9̶_89", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "Identifier",
+        name: "price_9̶9̶_89"
+      }
+    }
+  ]
+});
+
 // option tests
 
 test("var a = 1;", {
   type: "Program",
-  start: 0,
-  end: 10,
   loc: {
     start: {
       line: 1,
@@ -26424,8 +26081,6 @@ test("var a = 1;", {
   body: [
     {
       type: "VariableDeclaration",
-      start: 0,
-      end: 9,
       loc: {
         start: {
           line: 1,
@@ -26433,15 +26088,13 @@ test("var a = 1;", {
         },
         end: {
           line: 1,
-          column: 9
+          column: 10
         },
         source: "test.js"
       },
       declarations: [
         {
           type: "VariableDeclarator",
-          start: 4,
-          end: 9,
           loc: {
             start: {
               line: 1,
@@ -26455,8 +26108,6 @@ test("var a = 1;", {
           },
           id: {
             type: "Identifier",
-            start: 4,
-            end: 5,
             loc: {
               start: {
                 line: 1,
@@ -26472,8 +26123,6 @@ test("var a = 1;", {
           },
           init: {
             type: "Literal",
-            start: 8,
-            end: 9,
             loc: {
               start: {
                 line: 1,
@@ -26485,8 +26134,7 @@ test("var a = 1;", {
               },
               source: "test.js"
             },
-            value: 1,
-            raw: "1"
+            value: 1
           }
         }
       ],
@@ -26496,7 +26144,108 @@ test("var a = 1;", {
 }, {
   locations: true,
   sourceFile: "test.js"
-})
+});
+
+test("a.in / b", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "BinaryExpression",
+        left: {
+          type: "MemberExpression",
+          object: {
+            type: "Identifier",
+            name: "a"
+          },
+          property: {
+            type: "Identifier",
+            name: "in"
+          },
+          computed: false
+        },
+        operator: "/",
+        right: {
+          type: "Identifier",
+          name: "b"
+        }
+      }
+    }
+  ]
+});
+
+test("{}/=/", {
+  type: "Program",
+  body: [
+    {
+      type: "BlockStatement",
+      body: []
+    },
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "Literal",
+        raw: "/=/"
+      }
+    }
+  ]
+});
+
+test("foo <!--bar\n+baz", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "BinaryExpression",
+        left: {
+          type: "Identifier",
+          name: "foo"
+        },
+        operator: "+",
+        right: {
+          type: "Identifier",
+          name: "baz"
+        }
+      }
+    }
+  ]
+});
+
+test("x = y-->10;\n --> nothing", {
+  type: "Program",
+  body: [
+    {
+      type: "ExpressionStatement",
+      expression: {
+        type: "AssignmentExpression",
+        operator: "=",
+        left: {
+          type: "Identifier",
+          name: "x"
+        },
+        right: {
+          type: "BinaryExpression",
+          left: {
+            type: "UpdateExpression",
+            operator: "--",
+            prefix: false,
+            argument: {
+              type: "Identifier",
+              name: "y"
+            }
+          },
+          operator: ">",
+          right: {
+            type: "Literal",
+            value: 10
+          }
+        }
+      }
+    }
+  ]
+});
 
 // Failure tests
 
@@ -27056,5 +26805,60 @@ testFail("var this = 10;", "Unexpected token (1:4)");
 
 testFail("throw\n10;", "Illegal newline after throw (1:5)");
 
-testFail('"\\1"; \'use strict\';', "Octal literal in strict mode (1:16)");
+// Assertion Tests
+(function() {
+  var actualComments = [],
+      expectedComments = [
+        " Bear class",
+        " Whatever",
+        [" 1",
+         "         2",
+         "         3"
+        ].join('\n'),
+        "stuff"
+      ];
+  testAssert(
+    function TestComments() {
+      // Bear class
+      function Bear(x,y,z) {
+        this.position = [x||0,y||0,z||0]
+      }
 
+      Bear.prototype.roar = function(message) {
+        return 'RAWWW: ' + message; // Whatever
+      };
+
+      function Cat() {
+      /* 1
+         2
+         3*/
+      }
+
+      Cat.prototype.roar = function(message) {
+        return 'MEOOWW: ' + /*stuff*/ message;
+      };
+    }.toString(),
+    function assert(ast) {
+      if (actualComments.length !== expectedComments.length) {
+        return JSON.stringify(actualComments) + " !== " + JSON.stringify(expectedComments);
+      } else {
+        for (var i=0, n=actualComments.length; i < n; i++) {
+          if (actualComments[i] !== expectedComments[i])
+            return JSON.stringify(actualComments[i]) + ' !== ' + JSON.stringify(expectedComments[i]);
+        }
+      }
+    },
+    {
+      onComment: function(isMultiline, text) {
+        actualComments.push(text);
+      }
+    }
+  );
+})();
+
+(function() {
+  var comments = 0;
+  testAssert("\nfunction plop() {\n'use strict';\n/* Comment */\n}", function() {
+    if (comments != 1) return "Comment after strict counted twice.";
+  }, {onComment: function() {++comments;}});
+})();
