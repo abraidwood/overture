@@ -428,6 +428,18 @@
     // A for/in statement, or, if each is true, a for each/in statement.
     // Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)
 
+    function ForOfStatement() {
+        this.type = "ForOfStatement";
+        this.left = null;                   // VariableDeclaration |  Expression
+        this.right = null;                  // Expression
+        this.body = null;                   // Statement
+        // @if LOCATIONS=true
+        this.loc = new SourceLocation();    // SourceLocation | null
+        // @endif
+    }
+
+    // A for/of statement.
+
     function DebuggerStatement() {
         this.type = 'DebuggerStatement';
         // @if LOCATIONS=true
@@ -862,7 +874,7 @@
     var _var = new Keyword('var');
     var _while = new Keyword('while', {isLoop:true});
     var _with = new Keyword('with');
-
+    var _of = new Keyword('of');
 
     // Some keywords are treated as regular operators. `in` sometimes
     // (when parsing `for`) needs to be tested against specifically, so
@@ -1053,6 +1065,7 @@
             case 'if': return _if;
             case 'do': return _do;
             case 'in': tokRegexpAllowed = true; return _in;
+            case 'of': tokRegexpAllowed = true; return _of;
             }
             break;
         case 7:
@@ -2260,9 +2273,17 @@
             init.loc.end = lastEndLoc;
             // @endif
 
-            if (init.declarations.length === 1 && eat(_in) === true) {
-                node = parse_ForInStatement();
-                node.left = init;
+            if (init.declarations.length === 1) {
+                if(eat(_in) === true) {
+                    node = parse_ForInStatement();
+                    node.left = init;
+                } else if(eat(_of)) {
+                    node = parse_ForOfStatement();
+                    node.left = init;
+                } else {
+                    node = parse_ForStatement();
+                    node.init = init;
+                }
             } else {
                 node = parse_ForStatement();
                 node.init = init;
@@ -2272,6 +2293,10 @@
             if (eat(_in) === true) {
                 checkLVal(init);
                 node = parse_ForInStatement();
+                node.left = init;
+            } else if (eat(_of) === true) {
+                checkLVal(init);
+                node = parse_ForOfStatement();
                 node.left = init;
             } else {
                 node = parse_ForStatement();
@@ -2627,6 +2652,18 @@
     // Parse a 'for ( in ) {}' loop.
     function parse_ForInStatement() {
         var node = new ForInStatement();
+        node.right = parseExpression(false);
+        expect(_parenR);
+        node.body = parseStatement();
+        // @if LOCATIONS=true
+        node.loc.end = lastEndLoc;
+        // @endif
+        return node;
+    }
+
+    // Parse a 'for ( of ) {}' loop.
+    function parse_ForOfStatement() {
+        var node = new ForOfStatement();
         node.right = parseExpression(false);
         expect(_parenR);
         node.body = parseStatement();
