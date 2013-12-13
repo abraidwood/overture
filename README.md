@@ -33,7 +33,7 @@ Items marked 'X' are not currently implemented.
         // `start` and `end` properties in `{line, column}` form (with  
         // line being 1-based and column 0-based) will be attached to the  
         // nodes.  
-    X   locations: false,  
+        locations: false,  
 
         // A function can be passed as `onComment` option, which will  
         // cause Overture to call that function with `(block, text, start,  
@@ -65,18 +65,20 @@ Items marked 'X' are not currently implemented.
         
         // When `location` is on, you can pass this to record the source  
         // file in every node's `loc` object.  
-    X   sourceFile: null  
+        sourceFile: null  
     };
 
 # Files
 #### overture.js
 This is the main file (and the only one you need to use)
 
-#### overture-tokenizer.js
-Doesn't generate a syntax tree, it's an experiment to compare parsing performance to zeparser2 (https://github.com/qfox/zeparser2) with speed tests running in either a modified gonzales (https://github.com/qfox/gonzales) or a modified esprima compare (http://esprima.org/test/compare.html)
+#### overture-locations.js
+Generates an AST which contains start and end location data.
 
-#### overture_loc.js
-Experiments with generating an AST which contains start and end location data.  When I last tried it, there were performance issues with esprimas <code>range:[start,end]</code> as V8 bailed on optimization.  I do however agree that the ParserAPI design with line and column doesn't feel very machine oriented. I think this could(should?) be calculated separately for user friendliness when errors are found (tracking newlines doesn't feel correct).
+#### overture-tokenizer.js
+Doesn't generate a syntax tree, it's an experiment to compare parsing performance to zeparser2 (https://github.com/qfox/zeparser2)
+
+When I last tried it, there were performance issues with esprimas <code>range:[start,end]</code> as V8 bailed on optimization.
 
 
 # Function specific performance tests
