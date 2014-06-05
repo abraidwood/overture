@@ -81,7 +81,7 @@ var parsers = [{
     runner: function(source, options){
       return esprima.parse(source, options);
     }
-}, ,{
+}, {
     name:'UglifyJS2',
     files: [
       'uglifyjs2/uglifyjs2.js'
@@ -100,5 +100,20 @@ var parsers = [{
     },
     runner: function(source, options){
       return uglifyjs.parse(source);
+    }
+}, {
+    name:'Traceur',
+    files: [
+      'traceur/traceur.js'
+    ],
+    author: '',
+    link: 'https://github.com/google/traceur-compiler',
+    run: false,
+    options: {
+    },
+    runner: function(source, options){
+        var file = new traceur.syntax.SourceFile('name', source);
+        var parser = new traceur.syntax.Parser(file, console);
+        return parser.parseScript();
     }
 }];
