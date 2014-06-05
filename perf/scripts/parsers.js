@@ -23,13 +23,13 @@ var parsers = [{
   },{
     name:'Overture',
     files: [
-      '../../overture-locations.js'
+      '../../overture-processed.js'
     ],
     author: 'Alistair Braidwood',
     link: 'https://github.com/abraidwood/overture/',
     run: true,
     options: {
-        locations: { fixedVal: true },
+        locations: { fixedVal: false },
         ranges: { fixedVal: false },
         ecmaVersion: { choices:[3,5],defaultVal: 5 },
         strictSemicolons: { defaultVal: false, },
@@ -49,7 +49,7 @@ var parsers = [{
     link: 'https://github.com/marijnh/acorn/',
     run: true,
     options: {
-        locations: { defaultVal: true },
+        locations: { defaultVal: false },
         ranges: { defaultVal: false },
         ecmaVersion: { choices:[3,5],defaultVal: 5 },
         strictSemicolons: { defaultVal: false, },
@@ -70,7 +70,7 @@ var parsers = [{
     link: 'http://esprima.org/',
     run: true,
     options: {
-        loc: { defaultVal: true },
+        loc: { defaultVal: false },
         range: { defaultVal: false },
         ecmaVersion: { fixedVal: 5 },
         strictSemicolons: { fixedVal: false, },
@@ -80,5 +80,25 @@ var parsers = [{
     },
     runner: function(source, options){
       return esprima.parse(source, options);
+    }
+}, ,{
+    name:'UglifyJS2',
+    files: [
+      'uglifyjs2/uglifyjs2.js'
+    ],
+    author: 'Mihai Bazon',
+    link: 'https://github.com/mishoo/UglifyJS2',
+    run: false,
+    options: {
+        loc: { defaultVal: true },
+        range: { defaultVal: false },
+        ecmaVersion: { fixedVal: 5 },
+        strictSemicolons: { fixedVal: false, },
+        allowTrailingCommas: { fixedVal: true, },
+        forbidReserved: { fixedVal: false },
+        comment: {defaultVal: false}
+    },
+    runner: function(source, options){
+      return uglifyjs.parse(source);
     }
 }];
