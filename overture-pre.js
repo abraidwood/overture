@@ -899,6 +899,8 @@
     var _colon = new Keyword(':');
     var _dot = new Keyword('.');
     var _question = new Keyword('?');
+    var _ellipsis = new Keyword('...');
+
 
     // Operators. These carry several kinds of properties to help the
     // parser use them properly (the presence of these properties is
@@ -1065,7 +1067,7 @@
             case 'if': return _if;
             case 'do': return _do;
             case 'in': tokRegexpAllowed = true; return _in;
-            case 'of': tokRegexpAllowed = true; return _of;
+            //case 'of': tokRegexpAllowed = true; return _of;
             }
             break;
         case 7:
@@ -1268,13 +1270,16 @@
 
     var nextChar = 0;
 
-    // Read '.[0-9]' and '.'
+    // Read '.[0-9]', '...' and '.'
     // The interpretation of a dot depends on whether it is followed
-    // by a digit.
+    // by a digit or two more dots.
     function readToken_dot() {
         nextChar = input.charCodeAt(tokPos+1);
         if (nextChar >= 48 && nextChar <= 57) {
             readNumber(46);
+        } else if(nextChar === 46 && options.ecmaVersion >= 6 && input.charCodeAt(tokPos+2) === 46) {
+            tokPos += 3;
+            finishToken(_ellipsis);
         } else {
             ++tokPos;
             tokRegexpAllowed = true;
@@ -2277,9 +2282,9 @@
                 if(eat(_in) === true) {
                     node = parse_ForInStatement();
                     node.left = init;
-                } else if(eat(_of)) {
-                    node = parse_ForOfStatement();
-                    node.left = init;
+                // } else if(eat(_of)) {
+                //     node = parse_ForOfStatement();
+                //     node.left = init;
                 } else {
                     node = parse_ForStatement();
                     node.init = init;
@@ -2294,10 +2299,10 @@
                 checkLVal(init);
                 node = parse_ForInStatement();
                 node.left = init;
-            } else if (eat(_of) === true) {
-                checkLVal(init);
-                node = parse_ForOfStatement();
-                node.left = init;
+            // } else if (eat(_of) === true) {
+            //     checkLVal(init);
+            //     node = parse_ForOfStatement();
+            //     node.left = init;
             } else {
                 node = parse_ForStatement();
                 node.init = init;
@@ -3130,9 +3135,18 @@
 
         if (eat(_parenR) === false) {
             for(;;) {
-                node.params.push(parse_Identifier());
-                if (eat(_parenR) === true) {break;}
-                expect(_comma);
+                if (options.ecmaVersion >= 6 && eat(_ellipsis)) {
+                    node.rest = parse_Identifier();
+                    eat(_parenR);
+                    break;
+                } else {
+                    node.params.push(parse_Identifier());
+                    if (eat(_parenR) === true) {
+                        break;
+                    } else {
+                        expect(_comma);
+                    }
+                }
             }
         }
 
@@ -3147,8 +3161,17 @@
         // are not repeated, and it does not try to bind the words `eval`
         // or `arguments`.
         if (strict || node.body.body.length && isUseStrict(node.body.body[0])) {
-            for (var i = node.id ? -1 : 0, leni = node.params.length; i < leni; ++i) {
-                var id = i < 0 ? node.id : node.params[i];
+            // Negative indices are used to reuse loop body for node.rest and node.id
+            for (var i = -2, id; i < node.params.length; ++i) {
+                if (i >= 0) {
+                    id = node.params[i];
+                } else if (i == -2) {
+                    if (node.rest) id = node.rest;
+                    else continue;
+                } else {
+                    if (node.id) id = node.id;
+                    else continue;
+                }
                 if (isStrictReservedWord(id.name) || isStrictBadIdWord(id.name))
                     raise(tokPos, 'Defining \'' +id.name+ '\' in strict mode');
                 if (i >= 0) for (var j = 0; j < i; ++j) if (id.name === node.params[j].name)
