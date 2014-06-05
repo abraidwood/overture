@@ -22796,6 +22796,171 @@ test("debugger;", {
   }
 });
 
+test("function hello(...rest) { }", {
+  type: "Program",
+  body: [
+    {
+      type: "FunctionDeclaration",
+      id: {
+        type: "Identifier",
+        name: "hello",
+        loc: {
+          start: {
+            line: 1,
+            column: 9
+          },
+          end: {
+            line: 1,
+            column: 14
+          }
+        }
+      },
+      params: [],
+      rest: {
+        type: "Identifier",
+        name: "rest",
+        loc: {
+          start: {
+            line: 1,
+            column: 18
+          },
+          end: {
+            line: 1,
+            column: 22
+          }
+        }
+      },
+      body: {
+        type: "BlockStatement",
+        body: [],
+        loc: {
+          start: {
+            line: 1,
+            column: 24
+          },
+          end: {
+            line: 1,
+            column: 27
+          }
+        }
+      },
+      loc: {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 1,
+          column: 27
+        }
+      }
+    }
+  ],
+  loc: {
+    start: {
+      line: 1,
+      column: 0
+    },
+    end: {
+      line: 1,
+      column: 27
+    }
+  }
+}, {
+  ecmaVersion: 6,
+  locations: true
+});
+
+test("function hello(a, ...rest) { }", {
+  type: "Program",
+  body: [
+    {
+      type: "FunctionDeclaration",
+      id: {
+        type: "Identifier",
+        name: "hello",
+        loc: {
+          start: {
+            line: 1,
+            column: 9
+          },
+          end: {
+            line: 1,
+            column: 14
+          }
+        }
+      },
+      params: [
+        {
+          type: "Identifier",
+          name: "a",
+          loc: {
+            start: {
+              line: 1,
+              column: 15
+            },
+            end: {
+              line: 1,
+              column: 16
+            }
+          }
+        }
+      ],
+      rest: {
+        type: "Identifier",
+        name: "rest",
+        loc: {
+          start: {
+            line: 1,
+            column: 21
+          },
+          end: {
+            line: 1,
+            column: 25
+          }
+        }
+      },
+      body: {
+        type: "BlockStatement",
+        body: [],
+        loc: {
+          start: {
+            line: 1,
+            column: 27
+          },
+          end: {
+            line: 1,
+            column: 30
+          }
+        }
+      },
+      loc: {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 1,
+          column: 30
+        }
+      }
+    }
+  ],
+  loc: {
+    start: {
+      line: 1,
+      column: 0
+    },
+    end: {
+      line: 1,
+      column: 30
+    }
+  }
+}, {
+  ecmaVersion: 6,
+  locations: true
+});
+
 test("function hello() { sayHi(); }", {
   type: "Program",
   body: [
@@ -23700,6 +23865,153 @@ test("var hi = function() { sayHi() };", {
       column: 32
     }
   }
+});
+
+test("var hi = function (...r) { sayHi() };", {
+  type: "Program",
+  body: [
+    {
+      type: "VariableDeclaration",
+      declarations: [
+        {
+          type: "VariableDeclarator",
+          id: {
+            type: "Identifier",
+            name: "hi",
+            loc: {
+              start: {
+                line: 1,
+                column: 4
+              },
+              end: {
+                line: 1,
+                column: 6
+              }
+            }
+          },
+          init: {
+            type: "FunctionExpression",
+            id: null,
+            params: [],
+            rest: {
+              type: "Identifier",
+              name: "r",
+              loc: {
+                start: {
+                  line: 1,
+                  column: 22
+                },
+                end: {
+                  line: 1,
+                  column: 23
+                }
+              }
+            },
+            body: {
+              type: "BlockStatement",
+              body: [
+                {
+                  type: "ExpressionStatement",
+                  expression: {
+                    type: "CallExpression",
+                    callee: {
+                      type: "Identifier",
+                      name: "sayHi",
+                      loc: {
+                        start: {
+                          line: 1,
+                          column: 27
+                        },
+                        end: {
+                          line: 1,
+                          column: 32
+                        }
+                      }
+                    },
+                    arguments: [],
+                    loc: {
+                      start: {
+                        line: 1,
+                        column: 27
+                      },
+                      end: {
+                        line: 1,
+                        column: 34
+                      }
+                    }
+                  },
+                  loc: {
+                    start: {
+                      line: 1,
+                      column: 27
+                    },
+                    end: {
+                      line: 1,
+                      column: 34
+                    }
+                  }
+                }
+              ],
+              loc: {
+                start: {
+                  line: 1,
+                  column: 25
+                },
+                end: {
+                  line: 1,
+                  column: 36
+                }
+              }
+            },
+            loc: {
+              start: {
+                line: 1,
+                column: 9
+              },
+              end: {
+                line: 1,
+                column: 36
+              }
+            }
+          },
+          loc: {
+            start: {
+              line: 1,
+              column: 4
+            },
+            end: {
+              line: 1,
+              column: 36
+            }
+          }
+        }
+      ],
+      kind: "var",
+      loc: {
+        start: {
+          line: 1,
+          column: 0
+        },
+        end: {
+          line: 1,
+          column: 37
+        }
+      }
+    }
+  ],
+  loc: {
+    start: {
+      line: 1,
+      column: 0
+    },
+    end: {
+      line: 1,
+      column: 37
+    }
+  }
+}, {
+  ecmaVersion: 6,
+  locations: true
 });
 
 test("var hi = function eval() { };", {
