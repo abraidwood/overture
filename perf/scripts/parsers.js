@@ -90,7 +90,7 @@ var parsers = [{
     link: 'https://github.com/mishoo/UglifyJS2',
     run: false,
     options: {
-        loc: { defaultVal: true },
+        loc: { defaultVal: false },
         range: { defaultVal: false },
         ecmaVersion: { fixedVal: 5 },
         strictSemicolons: { fixedVal: false, },
