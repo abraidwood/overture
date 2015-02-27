@@ -28,6 +28,7 @@ function simpleBenchmark(parser, source, options) {
         lines += source.lines;
         dt = Date.now() - t0;
         if (dt > 1000) break;
+        break;
     }
     if(runProfile) {console.profileEnd(parser.name + ' - ' + source.name);}
     return Math.round(lines / (dt / 1000));

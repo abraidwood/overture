@@ -29,7 +29,7 @@ var parsers = [{
     link: 'https://github.com/abraidwood/overture/',
     run: true,
     options: {
-        locations: { fixedVal: false },
+        locations: { defaultVal: false },
         ranges: { fixedVal: false },
         ecmaVersion: { choices:[3,5],defaultVal: 5 },
         strictSemicolons: { defaultVal: false, },
@@ -47,7 +47,7 @@ var parsers = [{
     ],
     author: 'Marijn Haverbeke',
     link: 'https://github.com/marijnh/acorn/',
-    run: true,
+    run: false,
     options: {
         locations: { defaultVal: false },
         ranges: { defaultVal: false },
@@ -68,7 +68,7 @@ var parsers = [{
     ],
     author: 'Ariya Hidayat',
     link: 'http://esprima.org/',
-    run: true,
+    run: false,
     options: {
         loc: { defaultVal: false },
         range: { defaultVal: false },

@@ -8,12 +8,12 @@ function Source(name, run) {
 }
 
 var sources = [
-    // new Source('underscore-1.4.4',false),
-    // new Source('q',false),
-    // new Source('backbone-1.0.0',false),
-    // new Source('jquery-2.0.0',false),
-    // new Source('angular-1.0.6',false),
-    // new Source('three-r57',false),
+    new Source('underscore-1.4.4',true),
+    new Source('q',true),
+    new Source('backbone-1.0.0',true),
+    new Source('jquery-2.0.0',true),
+    new Source('angular-1.0.6',true),
+    new Source('three-r57',true),
     new Source('bigfib.cpp',true),
     new Source('container.cpp',true),
     new Source('pdfjs',true),
