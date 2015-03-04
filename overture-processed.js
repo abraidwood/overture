@@ -1,3 +1,514 @@
+/* jshint -W053, strict:true, eqeqeq:true, quotmark:single, undef:true, unused:true, trailing:true  */
+/* global  exports, module, define, ParserAPI*/
+
+(function(root, mod) {
+    'use strict';
+    if(typeof exports === 'object' && typeof module === 'object') {
+        // CommonJS
+        return mod(exports);
+    } else if (typeof define === 'function' && define.amd) {
+        // AMD
+        return define(['exports'], mod);
+    } else {
+        // Plain browser env
+        mod(root.ParserAPI || (root.ParserAPI = {}));
+    }
+})(this, function(exports) {
+    'use strict';
+
+    // ## Token types
+
+    // The assignment of fine-grained, information-carrying type objects
+    // allows the tokenizer to store the information it has about a
+    // token in a way that is very cheap for the parser to look up.
+
+    // All token type variables start with an underscore, to make them
+    // easy to recognize.
+
+    // These are the general types. The `type` property is only used to
+    // make them recognizeable when debugging.
+
+    var types = {
+        PROGRAM: new String('Program'),
+
+        EMPTY_STATEMENT: new String('EmptyStatement'),
+        BLOCK_STATEMENT: new String('BlockStatement'),
+        EXPRESSION_STATEMENT: new String('ExpressionStatement'),
+        IF_STATEMENT: new String('IfStatement'),
+        LABELED_STATEMENT: new String('LabeledStatement'),
+        BREAK_STATEMENT: new String('BreakStatement'),
+        WITH_STATEMENT: new String('WithStatement'),
+        SWITCH_STATEMENT: new String('SwitchStatement'),
+        RETURN_STATEMENT: new String('ReturnStatement'),
+        THROW_STATEMENT: new String('ThrowStatement'),
+        TRY_STATEMENT: new String('TryStatement'),
+        WHILE_STATEMENT: new String('WhileStatement'),
+        DOWHILE_STATEMENT: new String('DoWhileStatement'),
+        FOR_STATEMENT: new String('ForStatement'),
+        FORIN_STATEMENT: new String('ForInStatement'),
+        FOROF_STATEMENT: new String('ForOfStatement'),
+        DEBUGGER_STATEMENT: new String('DebuggerStatement'),
+
+        FUNCTION_DECLARATION: new String('FunctionDeclaration'),
+        VARIABLE_DECLARATION: new String('VariableDeclaration'),
+        VARIABLE_DECLARATOR: new String('VariableDeclarator'),
+
+        THIS_EXPRESSION: new String('ThisExpression'),
+        ARRAY_EXPRESSION: new String('ArrayExpression'),
+        OBJECT_EXPRESSION: new String('ObjectExpression'),
+        FUNCTION_EXPRESSION: new String('FunctionExpression'),
+        SEQUENCE_EXPRESSION: new String('SequenceExpression'),
+        UNARY_EXPRESSION: new String('UnaryExpression'),
+        BINARY_EXPRESSION: new String('BinaryExpression'),
+        ASSIGNMENT_EXPRESSION: new String('AssignmentExpression'),
+        UPDATE_EXPRESSION: new String('UpdateExpression'),
+        LOGICAL_EXPRESSION: new String('LogicalExpression'),
+        CONDITIONAL_EXPRESSION: new String('ConditionalExpression'),
+        NEW_EXPRESSION: new String('NewExpression'),
+        CALL_EXPRESSION: new String('CallExpression'),
+        MEMBER_EXPRESSION: new String('MemberExpression'),
+
+        SWITCH_CASE: new String('SwitchCase'),
+        CATCH_CLAUSE: new String('CatchClause'),
+
+
+        IDENTIFIER: new String('Identifier'),
+        LITERAL: new String('Literal')
+    };
+
+    // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
+    var nodes = {
+
+        // ### Programs
+
+        'Program': function Program() {
+            this.type = types.PROGRAM;
+            this.body = [];                     // [ Statement ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A complete program source tree.
+
+        'SourceLocation': function SourceLocation() {
+            this.start = null;                  // Position
+            this.end = null;                    // Position
+            this.source = null;                 // string | null
+        },
+        // The loc field represents the source location information of the node. If the parser produced no information about the node's source location, the field is null; otherwise it is an object consisting of a start position (the position of the first character of the parsed source region) and an end position (the position of the first character after the parsed source region):
+
+        // Each Position object consists of a line number (1-indexed) and a column number (0-indexed):
+        'Position': function Position() {
+            this.line = 1;                      // number >= 1
+            this.column = 0;                    // number >= 0
+        },
+
+        // ### Statements
+
+        'EmptyStatement': function EmptyStatement() {
+            this.type = types.EMPTY_STATEMENT;
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An empty statement, i.e., a solitary semicolon.
+
+        'BlockStatement': function BlockStatement() {
+            this.type = types.BLOCK_STATEMENT;
+            this.body = [];                     // [ Statement ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A block statement, i.e., a sequence of statements surrounded by braces.
+
+        'ExpressionStatement': function ExpressionStatement() {
+            this.type = types.EXPRESSION_STATEMENT;
+            this.expression = null;             // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An expression statement, i.e., a statement consisting of a single expression.
+
+        'IfStatement': function IfStatement() {
+            this.type = types.IF_STATEMENT;
+            this.test = null;                   // Expression
+            this.consequent = null;             // Statement
+            this.alternate = null;              // Statement | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An if statement.
+
+        'LabeledStatement': function LabeledStatement() {
+            this.type = types.LABELED_STATEMENT;
+            this.label = null;                  // Identifier
+            this.body = null;                   // Statement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A labeled statement, i.e., a statement prefixed by a break/continue label.
+
+        'BreakStatement': function BreakStatement() {
+            this.type = types.BREAK_STATEMENT;
+            this.label = null;                  // Identifier | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A break statement.
+
+        'ContinueStatement': function ContinueStatement() {
+            this.type = types.CONTINUE_STATEMENT;
+            this.label = null;                  // Identifier | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A continue statement.
+
+        'WithStatement': function WithStatement() {
+            this.type = types.WITH_STATEMENT;
+            this.object = null;                 // Expression
+            this.body = null;                   // Statement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A with statement.
+
+        'SwitchStatement': function SwitchStatement() {
+            this.type = types.SWITCH_STATEMENT;
+            this.discriminant = null;           // Expression
+            this.cases = [];                    // [ SwitchCase ]
+            this.lexical = false;               // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
+
+        'ReturnStatement': function ReturnStatement() {
+            this.type = types.RETURN_STATEMENT;
+            this.argument = null;               // Expression | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A return statement.
+
+        'ThrowStatement': function ThrowStatement() {
+            this.type = types.THROW_STATEMENT;
+            this.argument = null;               // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A throw statement.
+
+        'TryStatement': function TryStatement() {
+            this.type = types.TRY_STATEMENT;
+            this.block = null;                  // BlockStatement
+            this.handler = null;                // CatchClause | null
+            this.finalizer = null;              // BlockStatement | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A try statement.
+
+        'WhileStatement': function WhileStatement() {
+            this.type = types.WHILE_STATEMENT;
+            this.body = null;                   // Statement
+            this.test = null;                   // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A while statement
+
+        'DoWhileStatement': function DoWhileStatement() {
+            this.type = types.DOWHILE_STATEMENT;
+            this.body = null;                   // Statement
+            this.test = null;                   // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A do/while statement.
+
+        'ForStatement': function ForStatement() {
+            this.type = types.FOR_STATEMENT;
+            this.init = null;                   // VariableDeclaration | Expression | null
+            this.test = null;                   // Expression | null
+            this.update = null;                 // Expression | null
+            this.body = null;                   // Statement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A for statement.
+
+        'ForInStatement': function ForInStatement() {
+            this.type = types.FORIN_STATEMENT;
+            this.left = null;                   // VariableDeclaration |  Expression
+            this.right = null;                  // Expression
+            this.body = null;                   // Statement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A for/in statement, or, if each is true, a for each/in statement.
+
+        'ForOfStatement': function ForOfStatement() {
+            this.type = types.FOROF_STATEMENT;
+            this.left = null;                   // VariableDeclaration |  Expression
+            this.right = null;                  // Expression
+            this.body = null;                   // Statement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A for/of statement.
+
+        'DebuggerStatement': function DebuggerStatement() {
+            this.type = types.DEBUGGER_STATEMENT;
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A debugger statement.
+
+        // ### Declarations
+
+        'FunctionDeclaration': function FunctionDeclaration() {
+            this.type = types.FUNCTION_DECLARATION;
+            this.id = null;                     // Identifier
+            this.params = [];                   // [ Pattern ]
+            this.defaults = [];                 // [ Expression ]
+            this.rest = null;                   // Identifier | null
+            this.body = null;                   // BlockStatement | Expression
+            this.expression = false;            // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A function declaration.
+        // Note: The id field cannot be null.
+
+        'VariableDeclaration': function VariableDeclaration(state) {
+            this.type = types.VARIABLE_DECLARATION;
+            this.declarations = [];             // [ VariableDeclarator ]
+            this.kind = state.tokType;          // "var" | "let" | "const"
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A variable declaration, via one of var, let, or const.
+
+        'VariableDeclarator': function VariableDeclarator() {
+            this.type = types.VARIABLE_DECLARATOR;
+            this.id = null;                     // Pattern
+            this.init = null;                   // Expression | null
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A variable declarator.
+        // Note: The id field cannot be null.
+
+        // ### Expressions
+
+        'ThisExpression': function ThisExpression() {
+            this.type = types.THIS_EXPRESSION;
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A this expression.
+
+        'ArrayExpression': function ArrayExpression() {
+            this.type = types.ARRAY_EXPRESSION;
+            this.elements = [];                 // [ Expression | null ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An array expression.
+
+        'ObjectExpression': function ObjectExpression() {
+            this.type = types.OBJECT_EXPRESSION;
+            this.properties = [];               // [ ObjectExpressionProp ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
+
+        'FunctionExpression': function FunctionExpression() {
+            this.type = types.FUNCTION_EXPRESSION;
+            this.id = null;                     // Identifier | null
+            this.params = [];                   // [ Pattern ]
+            this.defaults = [];                 // [ Expression ]
+            this.rest = null;                   // Identifier | null
+            this.body = null;                   // BlockStatement | Expression
+            this.expression = false;            // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A function expression.
+
+        'SequenceExpression': function SequenceExpression() {
+            this.type = types.SEQUENCE_EXPRESSION;
+            this.expressions = [];              // [ Expression ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A sequence expression, i.e., a comma-separated sequence of expressions.
+
+        'UnaryExpression': function UnaryExpression() {
+            this.type = types.UNARY_EXPRESSION;
+            this.operator = null;               // state.UnaryOperator
+            this.argument = null;               // Expression
+            this.prefix = true;                 // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A unary operator expression.
+
+        'BinaryExpression': function BinaryExpression() {
+            this.type = types.BINARY_EXPRESSION;
+            this.operator = null;               // state.BinaryOperator
+            this.left = null;                   // Expression
+            this.right = null;                  // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A binary operator expression.
+
+        'AssignmentExpression': function AssignmentExpression() {
+            this.type = types.ASSIGNMENT_EXPRESSION;
+            this.operator = null;               // state.AssignmentOperator
+            this.left = null;                   // Expression
+            this.right = null;                  // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An assignment operator expression.
+
+        'UpdateExpression': function UpdateExpression() {
+            this.type = types.UPDATE_EXPRESSION;
+            this.operator = null;               // state.UpdateOperator
+            this.argument = null;               // Expression
+            this.prefix = true;                 // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An update (increment or decrement) operator expression.
+
+        'LogicalExpression': function LogicalExpression() {
+            this.type = types.LOGICAL_EXPRESSION;
+            this.operator = null;               // state.LogicalOperator
+            this.left = null;                   // Expression
+            this.right = null;                  // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A logical operator expression.
+
+        'ConditionalExpression': function ConditionalExpression() {
+            this.type = types.CONDITIONAL_EXPRESSION;
+            this.test = null;                   // Expression
+            this.consequent = null;             // Expression
+            this.alternate = null;              // Expression
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A conditional expression, i.e., a ternary ?/: expression.
+
+        'NewExpression': function NewExpression() {
+            this.type = types.NEW_EXPRESSION;
+            this.callee = null;                 // Expression
+            this.arguments = [];                // [ Expression | null ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A new expression.
+
+        'CallExpression': function CallExpression(callee) {
+            this.type = types.CALL_EXPRESSION;
+            this.callee = callee;               // Expression
+            this.arguments = [];                // [ Expression | null ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A function or method call expression.
+
+        'MemberExpression': function MemberExpression() {
+            this.type = types.MEMBER_EXPRESSION;
+            this.object = null;                 // Expression
+            this.property = null;               // Identifier | Expression
+            this.computed = false;              // boolean
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
+
+        // ### Clauses
+
+        'SwitchCase': function SwitchCase() {
+            this.type = types.SWITCH_CASE;
+            this.test = null;                   // Expression | null
+            this.consequent = [];               // [ Statement ]
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
+
+        'CatchClause': function CatchClause() {
+            this.type = types.CATCH_CLAUSE;
+            this.param = null;                  // Pattern
+            this.body = null;                   // BlockStatement
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
+
+        // ### Miscellaneous
+
+        'Identifier': function Identifier() {
+            this.type = types.IDENTIFIER;
+            this.name = '';                     // string
+            this.loc = null;                    // SourceLocation | null
+        },
+        // An identifier. Note that an identifier may be an expression or a destructuring pattern.
+
+        'Literal': function Literal() {
+            this.type = types.LITERAL;
+            this.value = null;                  // number
+            this.loc = null;                    // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+    };
+
+    var operators = {
+
+        // Assignment operator tokens.
+        'AssignmentOperator': {
+            'eq': new String('='),
+            'plus': new String('+='),
+            'minus': new String('-='),
+            'mult': new String('*='),
+            'div': new String('/='),
+            'modulo': new String('%='),
+            'left_shift': new String('<<='),
+            'right_shift': new String('>>='),
+            'zero_fill_right_shift': new String('>>>='),
+            'OR': new String('|='),
+            'XOR': new String('^='),
+            'AND': new String('&=')
+        },
+
+        // Binary operator tokens.
+        'BinaryOperator': {
+            'eq_eq': new String('=='),
+            'ex_eq': new String('!='),
+            'eq_eq_eq': new String('==='),
+            'ex_eq_eq': new String('!=='),
+            'lt': new String('<'),
+            'lt_eq': new String('<='),
+            'gt': new String('>'),
+            'gt_eq': new String('>='),
+            'left_shift': new String('<<'),
+            'right_shift': new String('>>'),
+            'zero_fill_right_shift': new String('>>>'),
+            'plus': new String('+'),
+            'minus': new String('-'),
+            'mult': new String('*'),
+            'div': new String('/'),
+            'modulo': new String('%'),
+            'OR': new String('|'),
+            'AND': new String('&'),
+            'XOR': new String('^'),
+            'in': new String('in'),
+            'instanceof': new String('instanceof')
+        },
+
+        // Logical operator tokens.
+        'LogicalOperator': {
+            'OR': new String('||'),
+            'AND': new String('&&')
+        },
+
+        // Update operator tokens.
+        'UpdateOperator': {
+            'increment': new String('++'),
+            'decrement': new String('--')
+        },
+
+        // Unary operator tokens.
+        'UnaryOperator': {
+            'minus': new String('-'),
+            'plus': new String('+'),
+            'ex': new String('!'),
+            'BITWISE_NOT': new String('~'),
+            'typeof': new String('typeof'),
+            'void': new String('void'),
+            'delete': new String('delete')
+        }
+    };
+
+    exports.type = types;
+    exports.node = nodes;
+
+    exports.AssignmentOperator = operators.AssignmentOperator;
+    exports.BinaryOperator = operators.BinaryOperator;
+    exports.LogicalOperator = operators.LogicalOperator;
+    exports.UpdateOperator = operators.UpdateOperator;
+    exports.UnaryOperator = operators.UnaryOperator;
+
+});
+
 // Overture is a fast JavaScript parser written in JavaScript.
 //
 // Overture was written by Alistair Braidwood and released under an MIT
@@ -266,7 +777,6 @@
     // By default, Reflect.parse() produces Node objects, which are plain JavaScript objects (i.e., their prototype derives from the standard Object prototype). All node types implement the following interface:
     function Node(type) {
         this.type = type || null;           // 'string'
-        this.loc = new SourceLocation();    // SourceLocation | null
     }
 
     // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
@@ -298,593 +808,41 @@
         this.column = state.tokPos - tokLineStart;// number >= 0
     }
 
-    // ### Programs
 
-    var sProgram = new String('Program');
-    var Program = function Program() {
-        this.type = sProgram;
-        this.body = [];                     // [ Statement ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A complete program source tree.
-
-    // ### Statements
-
-    var sEmptyStatement = new String('EmptyStatement');
-    var EmptyStatement = function EmptyStatement() {
-        this.type = sEmptyStatement;
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // An empty statement, i.e., a solitary semicolon.
-
-    var sBlockStatement = new String('BlockStatement');
-    var BlockStatement = function BlockStatement() {
-        this.type = sBlockStatement;
-        this.body = [];                     // [ Statement ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A block statement, i.e., a sequence of statements surrounded by braces.
-
-    var sExpressionStatement = new String('ExpressionStatement');
-    var ExpressionStatement = function ExpressionStatement() {
-        this.type = sExpressionStatement;
-        this.expression = null;             // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var expressionStatementCounter = 0;
-    var expressionStatements = [];
-    var maxExpressionStatementIndex = 2048;
-    var createExpressionStatements = function createExpressionStatements() {
-        maxExpressionStatementIndex *= 2;
-        for(var i=expressionStatementCounter;i<maxExpressionStatementIndex;i++) {
-            expressionStatements[i] = new ExpressionStatement();
-        }
-    }
-    createExpressionStatements();
-    var newExpressionStatement = function newExpressionStatement() {
-        if(expressionStatementCounter === maxExpressionStatementIndex) {
-            createExpressionStatements();
-        }
-        expressionStatements[expressionStatementCounter].loc.start = tokStartLoc;
-        return expressionStatements[expressionStatementCounter++];
-    }
-    // An expression statement, i.e., a statement consisting of a single expression.
-
-    var sIfStatement = new String('IfStatement');
-    var IfStatement = function IfStatement() {
-        this.type = sIfStatement;
-        this.test = null;                   // Expression
-        this.consequent = null;             // Statement
-        this.alternate = null;              // Statement | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // An if statement.
-
-    var sLabeledStatement = new String('LabeledStatement');
-    var LabeledStatement = function LabeledStatement() {
-        this.type = sLabeledStatement;
-        this.label = null;                  // Identifier
-        this.body = null;                   // Statement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A labeled statement, i.e., a statement prefixed by a break/continue label.
-
-    var sBreakStatement = new String('BreakStatement');
-    var BreakStatement = function BreakStatement() {
-        this.type = sBreakStatement;
-        this.label = null;                  // Identifier | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A break statement.
-
-    var sContinueStatement = new String('ContinueStatement');
-    var ContinueStatement = function ContinueStatement() {
-        this.type = sContinueStatement;
-        this.label = null;                  // Identifier | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A continue statement.
-
-    var sMemberExpression = new String('MemberExpression');
-    var WithStatement = function WithStatement() {
-        this.type = 'WithStatement';
-        this.object = null;                 // Expression
-        this.body = null;                   // Statement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A with statement.
-
-    var sSwitchStatement = new String('SwitchStatement');
-    var SwitchStatement = function SwitchStatement() {
-        this.type = sSwitchStatement;
-        this.discriminant = null;           // Expression
-        this.cases = [];                    // [ SwitchCase ]
-        //this.lexical = false;               // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
-
-    var sReturnStatement = new String('ReturnStatement');
-    var ReturnStatement = function ReturnStatement() {
-        this.type = sReturnStatement;
-        this.argument = null;               // Expression | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A return statement.
-
-    var sThrowStatement = new String('ThrowStatement');
-    var ThrowStatement = function ThrowStatement() {
-        this.type = sThrowStatement;
-        this.argument = null;               // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A throw statement.
-
-    var sTryStatement = new String('TryStatement');
-    var TryStatement = function TryStatement() {
-        this.type = sTryStatement;
-        this.block = null;                  // BlockStatement
-        this.handler = null;                // CatchClause | null
-        //this.guardedHandlers = [];        // [ CatchClause ]
-        this.finalizer = null;              // BlockStatement | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A try statement.
-    // Note: Multiple catch clauses are SpiderMonkey-specific. (and not implemented in overture)
-
-    var sWhileStatement = new String('WhileStatement');
-    var WhileStatement = function WhileStatement() {
-        this.type = sWhileStatement;
-        this.body = null;                   // Statement
-        this.test = null;                   // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A while statement
-
-    var sDoWhileStatement = new String('DoWhileStatement');
-    var DoWhileStatement = function DoWhileStatement() {
-        this.type = sDoWhileStatement;
-        this.body = null;                   // Statement
-        this.test = null;                   // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A do/while statement.
-
-    var sForStatement = new String('ForStatement');
-    var ForStatement = function ForStatement() {
-        this.type = sForStatement;
-        this.init = null;                   // VariableDeclaration | Expression | null
-        this.test = null;                   // Expression | null
-        this.update = null;                 // Expression | null
-        this.body = null;                   // Statement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A for statement.
-
-    var sForInStatement = new String('ForInStatement');
-    var ForInStatement = function ForInStatement() {
-        this.type = sForInStatement;
-        this.left = null;                   // VariableDeclaration |  Expression
-        this.right = null;                  // Expression
-        this.body = null;                   // Statement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A for/in statement, or, if each is true, a for each/in statement.
-    // Note: The for each form is SpiderMonkey-specific. (and not implemented in overture)
-
-    var sForOfStatement = new String('ForOfStatement');
-    var ForOfStatement = function ForOfStatement() {
-        this.type = sForOfStatement;
-        this.left = null;                   // VariableDeclaration |  Expression
-        this.right = null;                  // Expression
-        this.body = null;                   // Statement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-
-    // A for/of statement.
-
-    var sDebuggerStatement = new String('DebuggerStatement');
-    var DebuggerStatement = function DebuggerStatement() {
-        this.type = sDebuggerStatement;
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A debugger statement.
-    // Note: The debugger statement is new in ECMAScript 5th edition, although SpiderMonkey has supported it for years.
-
-    // ### Declarations
-
-    var sFunctionDeclaration = new String('FunctionDeclaration');
-    var FunctionDeclaration = function FunctionDeclaration() {
-        this.type = sFunctionDeclaration;
-        this.id = null;                     // Identifier
-        this.params = [];                   // [ Pattern ]
-        this.defaults = [];                 // [ Expression ]
-        this.rest = null;                   // Identifier | null
-        this.body = null;                   // BlockStatement | Expression
-        this.expression = false;            // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A function declaration.
-    // Note: The id field cannot be null.
-
-    var sVariableDeclaration = new String('VariableDeclaration');
-    var VariableDeclaration = function VariableDeclaration(state) {
-        this.type = sVariableDeclaration;
-        this.declarations = [];             // [ VariableDeclarator ]
-        this.kind = state.tokType;                // "var" | "let" | "const"
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A variable declaration, via one of var, let, or const.
-
-    var sVariableDeclarator = new String('VariableDeclarator');
-    var VariableDeclarator = function VariableDeclarator() {
-        this.type = sVariableDeclarator;
-        this.id = null;                     // Pattern
-        this.init = null;                   // Expression | null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A variable declarator.
-    // Note: The id field cannot be null.
-    // Note: let and const are SpiderMonkey-specific. (and not implemented in overture)
-
-    // ### Expressions
-
-    var sThisExpression = new String('ThisExpression');
-    var ThisExpression = function ThisExpression() {
-        this.type = sThisExpression;
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A this expression.
-
-    var sArrayExpression = new String('ArrayExpression');
-    var ArrayExpression = function ArrayExpression() {
-        this.type = sArrayExpression;
-        this.elements = [];                 // [ Expression | null ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // An array expression.
-
-    var sObjectExpression = new String('ObjectExpression');
-    var ObjectExpression = function ObjectExpression() {
-        this.type = sObjectExpression;
-        this.properties = [];               // [ ObjectExpressionProp ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var objectExpressionCounter = 0;
-    var objectExpressions = [];
-    var maxObjectExpressionsIndex = 2048;
-    var createObjectExpressions = function createObjectExpressions() {
-        maxObjectExpressionsIndex *= 2;
-        for(var i=objectExpressionCounter;i<maxObjectExpressionsIndex;i++) {
-            objectExpressions[i] = new ObjectExpression();
-        }
-    }
-    createObjectExpressions();
-    var newObjectExpression = function newObjectExpression() {
-        if(objectExpressionCounter === maxObjectExpressionsIndex) {
-            createObjectExpressions();
-        }
-        objectExpressions[objectExpressionCounter].loc.start = tokStartLoc;
-        return objectExpressions[objectExpressionCounter++];
-    }
-
-    // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
-
-    var sFunctionExpression = new String('FunctionExpression');
-    var FunctionExpression = function FunctionExpression() {
-        this.type = sFunctionExpression;
-        this.id = null;                     // Identifier | null
-        this.params = [];                   // [ Pattern ]
-        this.defaults = [];                 // [ Expression ]
-        this.rest = null;                   // Identifier | null
-        this.body = null;                   // BlockStatement | Expression
-        this.expression = false;            // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A function expression.
-
-    var sSequenceExpression = new String('SequenceExpression');
-    var SequenceExpression = function SequenceExpression() {
-        this.type = sSequenceExpression;
-        this.expressions = [];              // [ Expression ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A sequence expression, i.e., a comma-separated sequence of expressions.
-
-    var sUnaryExpression = new String('UnaryExpression');
-    var UnaryExpression = function UnaryExpression() {
-        this.type = sUnaryExpression;
-        this.operator = null;               // state.UnaryOperator
-        this.argument = null;               // Expression
-        this.prefix = true;                 // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A unary operator expression.
-
-    var sBinaryExpression = new String('BinaryExpression');
-    var BinaryExpression = function BinaryExpression() {
-        this.type = sBinaryExpression;
-        this.operator = null;               // state.BinaryOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A binary operator expression.
-
-    var sAssignmentExpression = new String('AssignmentExpression');
-    var AssignmentExpression = function AssignmentExpression() {
-        this.type = sAssignmentExpression;
-        this.operator = null;               // state.AssignmentOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // An assignment operator expression.
-
-    var sUpdateExpression = new String('UpdateExpression');
-    var UpdateExpression = function UpdateExpression() {
-        this.type = sUpdateExpression;
-        this.operator = null;               // state.UpdateOperator
-        this.argument = null;               // Expression
-        this.prefix = true;                 // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // An update (increment or decrement) operator expression.
-
-    var sLogicalExpression = new String('LogicalExpression');
-    var LogicalExpression = function LogicalExpression() {
-        this.type = sLogicalExpression;
-        this.operator = null;               // state.LogicalOperator
-        this.left = null;                   // Expression
-        this.right = null;                  // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A logical operator expression.
-
-    var sConditionalExpression = new String('ConditionalExpression');
-    var ConditionalExpression = function ConditionalExpression() {
-        this.type = sConditionalExpression;
-        this.test = null;                   // Expression
-        this.consequent = null;             // Expression
-        this.alternate = null;              // Expression
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A conditional expression, i.e., a ternary ?/: expression.
-
-    var sNewExpression = new String('NewExpression');
-    var NewExpression = function NewExpression() {
-        this.type = sNewExpression;
-        this.callee = null;                 // Expression
-        this.arguments = [];                // [ Expression | null ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A new expression.
-
-    var sCallExpression = new String('CallExpression');
-    var CallExpression = function CallExpression(callee) {
-        this.type = sCallExpression;
-        this.callee = callee;               // Expression
-        this.arguments = [];                // [ Expression | null ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A function or method call expression.
 
     // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
     // Note: "_dot" and "_bracketL" suffix is for overture performance
 
-    // var sMemberExpression = new String('MemberExpression');
+    var sMemberExpression = new String('MemberExpression');
     var MemberExpression_dot = function MemberExpression_dot() {
         this.type = sMemberExpression;
         this.object = null;                    // Expression
         this.property = null;               // Identifier | Expression
         this.computed = false;              // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var memberDotCounter = 0;
-    var memberDots = [];
-    var maxMemberDotsIndex = 2048;
-    var createMemberDots = function createMemberDots() {
-        maxMemberDotsIndex *= 2;
-        for(var i=memberDotCounter;i<maxMemberDotsIndex;i++) {
-            memberDots[i] = new MemberExpression_dot();
-        }
-    }
-    createMemberDots();
-    var newMemberExpression_dot = function newMemberExpression_dot() {
-        if(memberDotCounter === maxMemberDotsIndex) {
-            createMemberDots();
-        }
-        memberDots[memberDotCounter].loc.start = tokStartLoc;
-        return memberDots[memberDotCounter++];
-    }
+    };
 
     var MemberExpression_bracketL = function MemberExpression_bracketL(b) {
         this.type = sMemberExpression;
         this.object = b;                    // Expression
         this.property = null;               // Identifier | Expression
         this.computed = true;               // boolean
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-
-    // ### Clauses
-
-    var sSwitchCase = new String('SwitchCase');
-    var SwitchCase = function SwitchCase() {
-        this.type = sSwitchCase;
-        this.test = null;                   // Expression | null
-        this.consequent = [];               // [ Statement ]
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
-
-    var sCatchClause = new String('CatchClause');
-    var CatchClause = function CatchClause() {
-        this.type = sCatchClause;
-        this.param = null;                  // Pattern
-        //this.guard = null;                // Expression | null
-        this.body = null;                   // BlockStatement
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
-    // Note: The guard expression is SpiderMonkey-specific. (and not implemented in overture)
-
-    // ### Miscellaneous
-
-    var sIdentifier = new String('Identifier');
-    var Identifier = function Identifier() {
-        this.type = sIdentifier;
-        this.name = '';                   // string
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var identCounter = 0;
-    var idents = [];
-    var maxIdentIndex = 2048;
-    var createIdents = function createIdents() {
-        maxIdentIndex *= 2;
-        for(var i=identCounter;i<maxIdentIndex;i++) {
-            idents[i] = new Identifier();
-        }
-    }
-    createIdents();
-
-    var newIdentifier = function newIdentifier() {
-        if(identCounter === maxIdentIndex) {
-            createIdents();
-        }
-        idents[identCounter].loc.start = tokStartLoc;
-        return idents[identCounter++];
-    }
-    // An identifier. Note that an identifier may be an expression or a destructuring pattern.
-
-    // A literal token. Note that a literal can be an expression.
-    // Note: "state._number", "state._string", "state._regexp", "_null", "_true", "_false" suffix is for overture performance
-    var sLiteral = new String('Literal');
-    var LiteralNumber = function LiteralNumber() {
-        this.type = sLiteral;
-        this.value = 0;                     // number
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var literalNumberCounter = 0;
-    var literalNumbers = [];
-    var maxLiteralNumberIndex = 2048;
-    var createLiteralNumbers = function createLiteralNumbers() {
-        maxLiteralNumberIndex *= 2;
-        for(var i=literalNumberCounter;i<maxLiteralNumberIndex;i++) {
-            literalNumbers[i] = new LiteralNumber();
-        }
-    }
-    createLiteralNumbers();
-    var newLiteralNumber = function newLiteralNumber() {
-        if(literalNumberCounter === maxLiteralNumberIndex) {
-            createLiteralNumbers();
-        }
-        literalNumbers[literalNumberCounter].loc.start = tokStartLoc;
-        return literalNumbers[literalNumberCounter++];
-    }
-    var Literal_string = function Literal_string() {
-        this.type = sLiteral;
-        this.value = '';                    // string
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var Literal_regexp = function Literal_regexp() {
-        this.type = sLiteral;
-        this.value = null;                  // regexp
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var Literal_null = function Literal_null() {
-        this.type = sLiteral;
-        this.value = null;                  // null
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var Literal_true = function Literal_true() {
-        this.type = sLiteral;
-        this.value = true;                  // true
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
-    var Literal_false = function Literal_false() {
-        this.type = sLiteral;
-        this.value = false;                 // false
-        this.loc = new SourceLocation();    // SourceLocation | null
-    }
+    };
 
     // Overture helper
     var ObjectExpressionProp = function ObjectExpressionProp(state) {
         this.key = null;                    // Literal | Identifier
         this.value = null;                  // Expression
         this.kind = state.PropertyKind.init;      // "init" | "get" | "set"
-    }
+    };
 
     // Overture helper
     var Label = function Label(name) {
         this.name = name;
         this.kind = null;
-    }
+    };
 
 
     function buildState(state) {
-        // Assignment operator tokens.
-        state.AssignmentOperator = {
-            'eq': new String('='),
-            'plus': new String('+='),
-            'minus': new String('-='),
-            'mult': new String('*='),
-            'div': new String('/='),
-            'modulo': new String('%='),
-            'left_shift': new String('<<='),
-            'right_shift': new String('>>='),
-            'zero_fill_right_shift': new String('>>>='),
-            'OR': new String('|='),
-            'XOR': new String('^='),
-            'AND': new String('&=')
-        };
-
-        // Binary operator tokens.
-        state.BinaryOperator = {
-            'eq_eq': new String('=='),
-            'ex_eq': new String('!='),
-            'eq_eq_eq': new String('==='),
-            'ex_eq_eq': new String('!=='),
-            'lt': new String('<'),
-            'lt_eq': new String('<='),
-            'gt': new String('>'),
-            'gt_eq': new String('>='),
-            'left_shift': new String('<<'),
-            'right_shift': new String('>>'),
-            'zero_fill_right_shift': new String('>>>'),
-            'plus': new String('+'),
-            'minus': new String('-'),
-            'mult': new String('*'),
-            'div': new String('/'),
-            'modulo': new String('%'),
-            'OR': new String('|'),
-            'AND': new String('&'),
-            'XOR': new String('^'),
-            'in': new String('in'),
-            'instanceof': new String('instanceof')
-        };
-
-        // Logical operator tokens.
-        state.LogicalOperator = {
-            'OR': new String('||'),
-            'AND': new String('&&')
-        };
-
-        // Update opertator tokens.
-        state.UpdateOperator = {
-            'increment': new String('++'),
-            'decrement': new String('--')
-        };
-
-        // Unary operator tokens.
-        state.UnaryOperator = {
-            'minus': new String('-'),
-            'plus': new String('+'),
-            'ex': new String('!'),
-            'BITWISE_NOT': new String('~'),
-            'typeof': new String('typeof'),
-            'void': new String('void'),
-            'delete': new String('delete')
-        };
 
         state._num = new Node('num');
         state._regexp = new Node('regexp');
@@ -1323,79 +1281,6 @@
     // ## Tokenizer
 
 
-    // Reset the token state. Used at the start of a parse.
-
-    function initTokenState(state) {
-        state.tokPos = 0;
-        state.tokRegexpAllowed = true;
-        if(state.locations === true) {
-            tokCurLine = 1;
-            tokLineStart = 0;
-            lastEndLoc = new Position(state);
-        }
-        skipSpace(state);
-    }
-
-    // Called at the end of every token. Sets `state.tokEnd`, `state.tokVal`, and
-    // `state.tokRegexpAllowed`, and skips the space after the token, so that
-    // the next one's `tokStart` will point at the right position.
-
-    function finishToken(state, type, val) {
-        if(state.locations === true) {
-            tokEndLoc = new Position(state);
-        }
-        state.tokEnd = state.tokPos;
-        state.tokType = type;
-        state.tokVal = val;
-        skipSpace(state);
-    }
-
-    // Skip a block comment '/* ... */'
-    // http://jsperf.com/skipblockcomment/2
-    var _start = 0;
-    var _end = 0;
-    var _comment = '';
-    var _match = null;
-    var _lastMatch = '';
-
-    var _endBlockComment = new String('*/');
-
-    function skipBlockComment(state) {
-        _start = state.tokPos;
-        state.tokPos += 2;
-        _end = state.input.indexOf(_endBlockComment, state.tokPos);
-        if (_end === -1) raise(state, state.tokPos - 2, 'Unterminated comment');
-        state.tokPos = _end + 2;
-        state.ch_ = state.input.charCodeAt(state.tokPos);
-
-        if(state.locations === true) {
-            _comment = state.input.slice(_start + 2, _end);
-            if (state.locations) {
-                var _match = _comment.match(lineBreak);
-                if(_match) {
-                    tokCurLine += _match.length;
-                    _lastMatch = _match[_match.length-1];
-                    tokLineStart = state.input.lastIndexOf(_lastMatch,state.tokPos) + _lastMatch.length;
-                }
-            }
-        }
-    }
-
-    // Skip a line comment '// ... <newline>'
-    // http://jsperf.com/skiplinecomment/2
-    function skipLineComment(state) {
-        state.tokPos += 2;
-        state.ch_ = state.input.charCodeAt(state.tokPos);
-        while (state.ch_ !== 10 && state.ch_ !== 13 && state.tokPos < state.inputLen && state.ch_ !== 8232 && state.ch_ !== 8233) {
-            ++state.tokPos;
-            state.ch_ = state.input.charCodeAt(state.tokPos);
-        }
-    }
-
-    // Called at the start of the parse and after every token. Skips
-    // whitespace and comments.
-    // http://jsperf.com/skipspace/4
-
     // var state.ch_ = 0;
     function skipSpace(state) {
         while (state.tokPos < state.inputLen) {
@@ -1420,10 +1305,6 @@
             case 8232:
             case 8233:
                 ++state.tokPos;
-                if(state.locations === true) {
-                    ++tokCurLine;
-                    tokLineStart = state.tokPos;
-                }
                 break;
             case 47:
                 state.nextChar = state.input.charCodeAt(state.tokPos+1);
@@ -1437,10 +1318,6 @@
                 if (state.ch_ === 10) {
                     ++state.tokPos;
                 }
-                if(state.locations === true) {
-                    ++tokCurLine;
-                    tokLineStart = state.tokPos;
-                }
                 break;
             default:
                 if (state.ch_ >= 0x2000 && state.ch_ <= 0x200a) {
@@ -1451,6 +1328,61 @@
             }
         }
     }
+
+    // Reset the token state. Used at the start of a parse.
+
+    function initTokenState(state) {
+        state.tokPos = 0;
+        state.tokRegexpAllowed = true;
+        skipSpace(state);
+    }
+
+    // Called at the end of every token. Sets `state.tokEnd`, `state.tokVal`, and
+    // `state.tokRegexpAllowed`, and skips the space after the token, so that
+    // the next one's `tokStart` will point at the right position.
+
+    function finishToken(state, type, val) {
+        state.tokEnd = state.tokPos;
+        state.tokType = type;
+        state.tokVal = val;
+        skipSpace(state);
+    }
+
+    // Skip a block comment '/* ... */'
+    // http://jsperf.com/skipblockcomment/2
+    var _start = 0;
+    var _end = 0;
+    var _comment = '';
+    var _match = null;
+    var _lastMatch = '';
+
+    var _endBlockComment = new String('*/');
+
+    function skipBlockComment(state) {
+        _start = state.tokPos;
+        state.tokPos += 2;
+        _end = state.input.indexOf(_endBlockComment, state.tokPos);
+        if (_end === -1) raise(state, state.tokPos - 2, 'Unterminated comment');
+        state.tokPos = _end + 2;
+        state.ch_ = state.input.charCodeAt(state.tokPos);
+
+    }
+
+    // Skip a line comment '// ... <newline>'
+    // http://jsperf.com/skiplinecomment/2
+    function skipLineComment(state) {
+        state.tokPos += 2;
+        state.ch_ = state.input.charCodeAt(state.tokPos);
+        while (state.ch_ !== 10 && state.ch_ !== 13 && state.tokPos < state.inputLen && state.ch_ !== 8232 && state.ch_ !== 8233) {
+            ++state.tokPos;
+            state.ch_ = state.input.charCodeAt(state.tokPos);
+        }
+    }
+
+    // Called at the start of the parse and after every token. Skips
+    // whitespace and comments.
+    // http://jsperf.com/skipspace/4
+
 
     // ### Token reading
 
@@ -1485,9 +1417,9 @@
 
         if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.div);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.div);
         } else {
-            finishToken(state, state._slash, state.BinaryOperator.div);
+            finishToken(state, state._slash, ParserAPI.BinaryOperator.div);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1498,9 +1430,9 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.mult);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.mult);
         } else {
-            finishToken(state, state._multiplyModulo, state.BinaryOperator.mult);
+            finishToken(state, state._multiplyModulo, ParserAPI.BinaryOperator.mult);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1511,9 +1443,9 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.modulo);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.modulo);
         } else {
-            finishToken(state, state._multiplyModulo, state.BinaryOperator.modulo);
+            finishToken(state, state._multiplyModulo, ParserAPI.BinaryOperator.modulo);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1524,12 +1456,12 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 124) {
             ++state.tokPos;
-            finishToken(state, state._logicalOR, state.LogicalOperator.OR);
+            finishToken(state, state._logicalOR, ParserAPI.LogicalOperator.OR);
         } else if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.OR);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.OR);
         } else {
-            finishToken(state, state._bitwiseOR, state.BinaryOperator.OR);
+            finishToken(state, state._bitwiseOR, ParserAPI.BinaryOperator.OR);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1540,12 +1472,12 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 38) {
             ++state.tokPos;
-            finishToken(state, state._logicalAND, state.LogicalOperator.AND);
+            finishToken(state, state._logicalAND, ParserAPI.LogicalOperator.AND);
         } else if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.AND);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.AND);
         } else {
-            finishToken(state, state._bitwiseAND, state.BinaryOperator.AND);
+            finishToken(state, state._bitwiseAND, ParserAPI.BinaryOperator.AND);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1556,9 +1488,9 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.XOR);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.XOR);
         } else {
-            finishToken(state, state._bitwiseXOR, state.BinaryOperator.XOR);
+            finishToken(state, state._bitwiseXOR, ParserAPI.BinaryOperator.XOR);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1569,12 +1501,12 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 43) {
             ++state.tokPos;
-            finishToken(state, state._incdec, state.UpdateOperator.increment);
+            finishToken(state, state._incdec, ParserAPI.UpdateOperator.increment);
         } else if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.plus);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.plus);
         } else {
-            finishToken(state, state._plusMin, state.UnaryOperator.plus);
+            finishToken(state, state._plusMin, ParserAPI.UnaryOperator.plus);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1585,12 +1517,12 @@
         state.nextChar = state.input.charCodeAt(state.tokPos);
         if (state.nextChar === 45) {
             ++state.tokPos;
-            finishToken(state, state._incdec, state.UpdateOperator.decrement);
+            finishToken(state, state._incdec, ParserAPI.UpdateOperator.decrement);
         } else if (state.nextChar === 61) {
             ++state.tokPos;
-            finishToken(state, state._assign, state.AssignmentOperator.minus);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.minus);
         } else {
-            finishToken(state, state._plusMin, state.UnaryOperator.minus);
+            finishToken(state, state._plusMin, ParserAPI.UnaryOperator.minus);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1599,10 +1531,10 @@
     function readToken_leftShift(state) {
         if (state.input.charCodeAt(state.tokPos + 1) === 61) {
             state.tokPos += 2;
-            finishToken(state, state._assign, state.AssignmentOperator.left_shift);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.left_shift);
         } else {
             ++state.tokPos;
-            finishToken(state, state._bitShift, state.BinaryOperator.left_shift);
+            finishToken(state, state._bitShift, ParserAPI.BinaryOperator.left_shift);
         }
     }
 
@@ -1615,9 +1547,9 @@
         } else {
             if (state.nextChar === 61) {
                 ++state.tokPos;
-                finishToken(state, state._bitShift, state.BinaryOperator.lt_eq);
+                finishToken(state, state._bitShift, ParserAPI.BinaryOperator.lt_eq);
             } else {
-                finishToken(state, state._relational, state.BinaryOperator.lt);
+                finishToken(state, state._relational, ParserAPI.BinaryOperator.lt);
             }
         }
         state.tokRegexpAllowed = true;
@@ -1629,19 +1561,19 @@
 
         if (state.nextChar === 61) {
             state.tokPos += 2;
-            finishToken(state, state._assign, state.AssignmentOperator.right_shift);
+            finishToken(state, state._assign, ParserAPI.AssignmentOperator.right_shift);
         } else if (state.nextChar === 62) {
             state.nextChar = state.input.charCodeAt(state.tokPos + 2);
             if (state.nextChar === 61) {
                 state.tokPos += 3;
-                finishToken(state, state._assign, state.AssignmentOperator.zero_fill_right_shift);
+                finishToken(state, state._assign, ParserAPI.AssignmentOperator.zero_fill_right_shift);
             } else {
                 state.tokPos += 2;
-                finishToken(state, state._bitShift, state.BinaryOperator.zero_fill_right_shift);
+                finishToken(state, state._bitShift, ParserAPI.BinaryOperator.zero_fill_right_shift);
             }
         } else {
             ++state.tokPos;
-            finishToken(state, state._bitShift, state.BinaryOperator.right_shift);
+            finishToken(state, state._bitShift, ParserAPI.BinaryOperator.right_shift);
         }
     }
 
@@ -1654,9 +1586,9 @@
         } else {
             if (state.nextChar === 61) {
                 ++state.tokPos;
-                finishToken(state, state._bitShift, state.BinaryOperator.gt_eq);
+                finishToken(state, state._bitShift, ParserAPI.BinaryOperator.gt_eq);
             } else {
-                finishToken(state, state._relational, state.BinaryOperator.gt);
+                finishToken(state, state._relational, ParserAPI.BinaryOperator.gt);
             }
         }
         state.tokRegexpAllowed = true;
@@ -1669,13 +1601,13 @@
         if (state.nextChar === 61) {
             if (state.input.charCodeAt(state.tokPos+1) === 61) {
                 state.tokPos += 2;
-                finishToken(state, state._equality, state.BinaryOperator.ex_eq_eq);
+                finishToken(state, state._equality, ParserAPI.BinaryOperator.ex_eq_eq);
             } else {
             ++state.tokPos;
-                finishToken(state, state._equality, state.BinaryOperator.ex_eq);
+                finishToken(state, state._equality, ParserAPI.BinaryOperator.ex_eq);
             }
         } else {
-            finishToken(state, state._prefix, state.UnaryOperator.ex);
+            finishToken(state, state._prefix, ParserAPI.UnaryOperator.ex);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1688,12 +1620,12 @@
             ++state.tokPos;
             if (state.input.charCodeAt(state.tokPos) === 61) {
                 ++state.tokPos;
-                finishToken(state, state._equality, state.BinaryOperator.eq_eq_eq);
+                finishToken(state, state._equality, ParserAPI.BinaryOperator.eq_eq_eq);
             } else {
-                finishToken(state, state._equality, state.BinaryOperator.eq_eq);
+                finishToken(state, state._equality, ParserAPI.BinaryOperator.eq_eq);
             }
         } else {
-            finishToken(state, state._eq, state.AssignmentOperator.eq);
+            finishToken(state, state._eq, ParserAPI.AssignmentOperator.eq);
         }
         state.tokRegexpAllowed = true;
     }
@@ -1701,7 +1633,7 @@
     // Read '~'
     function readToken_BITWISE_NOT(state) {
         ++state.tokPos;
-        finishToken(state, state._prefix, state.UnaryOperator.BITWISE_NOT);
+        finishToken(state, state._prefix, ParserAPI.UnaryOperator.BITWISE_NOT);
         state.tokRegexpAllowed = true;
     }
 
@@ -1787,9 +1719,6 @@
         // readToken is necessarily big to avoid inlining in v8!
         // readToken is necessarily big to avoid inlining in v8!
 
-        if(state.locations === true) {
-            tokStartLoc = new Position(state);
-        }
 
         if (state.tokPos >= state.inputLen) {
             finishToken(state, state._eof);
@@ -2012,9 +1941,8 @@
             case 102: rs_str+='\f'; break;
             case 13:
                 if (state.input.charCodeAt(state.tokPos) === 10) ++state.tokPos;
+                break;
             case 10:
-                tokLineStart = state.tokPos;
-                ++tokCurLine;
                 break;
             default:
                 if (state.ch_ >= 48 & state.ch_ <= 55) { // 0-7 -> possible octal
@@ -2236,9 +2164,6 @@
     // Continue to the next token.
     function next(state) {
         state.lastEnd = state.tokEnd;
-        if(state.locations === true) {
-            lastEndLoc = tokEndLoc;
-        }
         readToken(state);
     }
 
@@ -2248,12 +2173,6 @@
         state.strict = strct;
         state.tokPos = state.tokStart;
 
-        if(state.locations === true) {
-            while (state.tokPos < tokLineStart) {
-                tokLineStart = state.input.lastIndexOf('\n', tokLineStart - 2) + 1;
-                --tokCurLine;
-            }
-        }
 
         skipSpace(state);
         readToken(state);
@@ -2263,8 +2182,8 @@
 
     // Test whether a statement node is the string literal `"use strict"`.
     function isUseStrict(state, stmt) {
-        return state.ecmaVersion >= 5 && stmt.type === sExpressionStatement &&
-            stmt.expression instanceof Literal_string && stmt.expression.value === _use_strict;
+        return state.ecmaVersion >= 5 && stmt.type === ParserAPI.type.EXPRESSION_STATEMENT &&
+            stmt.expression instanceof ParserAPI.node.Literal && stmt.expression.value === _use_strict;
     }
 
     // Predicate that tests whether the next token is of the given
@@ -2315,7 +2234,7 @@
     function checkLVal(state, expr) {
         if (expr.type === sMemberExpression) {
             return;
-        } else if (expr.type === sIdentifier) {
+        } else if (expr.type === ParserAPI.type.IDENTIFIER) {
             if (state.strict && isStrictBadIdWord(expr.name))
                 raise(state, state.tokPos, 'Assigning to ' + expr.name + ' in strict mode');
         } else {
@@ -2331,11 +2250,6 @@
     // to its body instead of creating a new node.
 
     function parseTopLevel(state) {
-        identCounter = 0;
-        literalNumberCounter=0;
-        expressionStatementCounter=0;
-        memberDotCounter=0;
-
         initTokenState(state);
         state.lastEnd = state.tokPos;
         state.inFunction = null;
@@ -2343,7 +2257,7 @@
         state.labels = [];
         readToken(state);
 
-        var node = state.program || new Program();
+        var node = state.program || new ParserAPI.node.Program();
         var stmt = null;
         if (state.tokType !== state._eof) {
                 stmt = parseStatement(state);
@@ -2354,9 +2268,6 @@
                     stmt = parseStatement(state);
                     node.body.push(stmt);
                 }
-        }
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
         }
         return node;
     }
@@ -2371,7 +2282,8 @@
     // Verifies that there is an actual destination to break or
     // continue to.
     function check_label_exists_break(state, label, starttype) {
-        var i=0,leni = state.labels.length;
+        var i=0;
+        var leni = state.labels.length;
 
         for (; i < leni; ++i) {
             var lab = state.labels[i];
@@ -2384,7 +2296,8 @@
 
     // Parse 'break' either from loop or switch
     function parse_BreakStatement(state) {
-        var starttype = state.tokType, node = new BreakStatement();
+        var starttype = state.tokType;
+        var node = new ParserAPI.node.BreakStatement();
         next(state);
 
         if (not_semicolon(state)) {
@@ -2395,19 +2308,18 @@
             }
         }
         check_label_exists_break(state, node.label, starttype);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Verifies that there is an actual destination to break or
     // continue to.
     function check_label_exists_continue(state, label, starttype) {
-        var i=0,leni = state.labels.length;
+        var i=0;
+        var leni = state.labels.length;
+        var lab;
 
         for (; i < leni; ++i) {
-            var lab = state.labels[i];
+            lab = state.labels[i];
             if (label === null || lab.name === label.name) {
                 if (lab.kind !== null && (lab.kind === str_loop)) break;
             }
@@ -2417,7 +2329,8 @@
 
     // Parse 'continue' either in loop
     function parse_ContinueStatement(state) {
-        var starttype = state.tokType, node = new ContinueStatement();
+        var starttype = state.tokType;
+        var node = new ParserAPI.node.ContinueStatement();
         next(state);
 
         if (not_semicolon(state)) {
@@ -2428,26 +2341,20 @@
             }
         }
         check_label_exists_continue(state, node.label, starttype);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'debugger'
     function parse_DebuggerStatement(state) {
-        var node = new DebuggerStatement();
+        var node = new ParserAPI.node.DebuggerStatement();
         next(state);
         semicolon(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'do { } while()'
     function parse_DoWhileStatement(state) {
-        var node = new DoWhileStatement();
+        var node = new ParserAPI.node.DoWhileStatement();
         next(state);
         state.labels.push(loopLabel);
         node.body = parseStatement(state);
@@ -2456,9 +2363,6 @@
         next(state);
         node.test = parseParenExpression(state);
         semicolon(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -2474,9 +2378,6 @@
     function parseStatement_for(state) {
         var init = null;
         var node = null;
-        if(state.locations === true) {
-            var loc = new SourceLocation();
-        }
         next(state);
         state.labels.push(loopLabel);
         if(state.tokType !== state._parenL) { unexpected(state); }
@@ -2484,12 +2385,9 @@
         if (state.tokType === state._semi) {
             node = parse_ForStatement(state);
         } else if (state.tokType === state._var || state.tokType === state._let) {
-            init = new VariableDeclaration(state);
+            init = new ParserAPI.node.VariableDeclaration(state);
             next(state);
             parseVar(state, init, true);
-            if(state.locations === true) {
-                init.loc.end = lastEndLoc;
-            }
 
             if (init.declarations.length === 1) {
                 if(state.tokType === state._in) {
@@ -2526,16 +2424,12 @@
             }
         }
         state.labels.pop();
-        if(state.locations === true) {
-            node.loc.start = loc.start;
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'function'
     function parse_Function(state) {
-        var node = new FunctionDeclaration();
+        var node = new ParserAPI.node.FunctionDeclaration();
         next(state);
         if (state.tokType !== state._name) unexpected(state);
         return parseFunction(state, node);
@@ -2543,16 +2437,13 @@
 
     // Parse 'if() {}'
     function parse_IfStatement(state) {
-        var node = new IfStatement();
+        var node = new ParserAPI.node.IfStatement();
         next(state);
         node.test = parseParenExpression(state);
         node.consequent = parseStatement(state);
         if(state.tokType === state._else) {
             next(state);
             node.alternate = parseStatement(state);
-        }
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
         }
         return node;
     }
@@ -2564,14 +2455,11 @@
 
     function parse_ReturnStatement(state) {
         if (state.inFunction) {
-            var node = new ReturnStatement();
+            var node = new ParserAPI.node.ReturnStatement();
             next(state);
             if (not_semicolon(state)) {
                 node.argument = parseExpression(state, false);
                 semicolon(state);
-            }
-            if(state.locations === true) {
-                node.loc.end = lastEndLoc;
             }
             return node;
         } else  {
@@ -2585,7 +2473,7 @@
     // adding statements to.
 
     function parse_SwitchStatement(state) {
-        var node = new SwitchStatement();
+        var node = new ParserAPI.node.SwitchStatement();
         var cur = null, sawDefault = false;
         next(state);
         node.discriminant = parseParenExpression(state);
@@ -2599,7 +2487,7 @@
                 break;
 
             } else if (state.tokType === state._case) {
-                cur = new SwitchCase();
+                cur = new ParserAPI.node.SwitchCase();
                 node.cases.push(cur);
                 next(state);
                 cur.test = parseExpression(state, false);
@@ -2611,7 +2499,7 @@
                     raise(state, state.lastStart, 'Multiple default clauses');
                 } else {
                     sawDefault = true;
-                    cur = new SwitchCase();
+                    cur = new ParserAPI.node.SwitchCase();
                     node.cases.push(cur);
                     next(state);
                     if(state.tokType !== state._colon) { unexpected(state); }
@@ -2622,41 +2510,30 @@
                 if (cur === null) unexpected(state);
                 cur.consequent.push(parseStatement(state));
             }
-            if(state.locations === true) {
-                if(cur !== null) {
-                    cur.loc.end = lastEndLoc;
-                }
-            }
         }
         state.labels.pop();
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'throw'
     function parse_ThrowStatement(state) {
-        var node = new ThrowStatement();
+        var node = new ParserAPI.node.ThrowStatement();
         next(state);
         if (newline.test(state.input.substring(state.lastEnd, state.tokStart)))
             raise(state, state.lastEnd, 'Illegal newline after throw');
         node.argument = parseExpression(state, false);
         semicolon(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'try {} catch() {}', 'try {} finally {}', 'try {} catch() {} finally {}'
     function parse_TryStatement(state) {
-        var node = new TryStatement();
+        var node = new ParserAPI.node.TryStatement();
         next(state);
         node.block = parse_BlockStatement(state);
 
         if (state.tokType === state._catch) {
-            var clause = new CatchClause();
+            var clause = new ParserAPI.node.CatchClause();
             next(state);
             if(state.tokType !== state._parenL) { unexpected(state); }
             next(state);
@@ -2666,9 +2543,6 @@
             if(state.tokType !== state._parenR) { unexpected(state); }
             next(state);
             clause.body = parse_BlockStatement(state);
-            if(state.locations === true) {
-                clause.loc.end = lastEndLoc;
-            }
             node.handler = clause;
         }
 
@@ -2680,58 +2554,43 @@
         if (node.handler === null && node.finalizer === null)
             raise(state, state.tokPos, 'Missing catch or finally clause');
 
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'var'
     function parseStatement_var(state) {
-        var node = new VariableDeclaration(state);
+        var node = new ParserAPI.node.VariableDeclaration(state);
         next(state);
         parseVar(state, node, false);
         semicolon(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'while() {}'
     function parse_WhileStatement(state) {
-        var node = new WhileStatement();
+        var node = new ParserAPI.node.WhileStatement();
         next(state);
         node.test = parseParenExpression(state);
         state.labels.push(loopLabel);
         node.body = parseStatement(state);
         state.labels.pop();
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse 'with () {}'
     function parse_WithStatement(state) {
-        var node = new WithStatement();
+        var node = new ParserAPI.node.WithStatement();
         if (state.strict) raise(state, state.tokStart, '\'with\' in strict mode');
         next(state);
         node.object = parseParenExpression(state);
         node.body = parseStatement(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse an empty statement, i.e. a solitary semicolon
     function parse_EmptyStatement(state) {
-        var node = new EmptyStatement();
+        var node = new ParserAPI.node.EmptyStatement();
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -2742,14 +2601,20 @@
     // Identifier node, we switch to interpreting it as a label.
 
     function parse_maybeLabeledStatement(state) {
-        var starttype = state.tokType, i, leni, node = null;
-        var maybeName = state.tokVal, expr = parseExpression(state, false);
-        if (starttype === state._name && expr.type === sIdentifier && state.tokType === state._colon) {
+        var starttype = state.tokType;
+        var i;
+        var leni;
+        var node = null;
+        var label = null;
+        var maybeName = state.tokVal;
+        var expr = parseExpression(state, false);
+
+        if (starttype === state._name && expr.type === ParserAPI.type.IDENTIFIER && state.tokType === state._colon) {
             next(state);
-            node = new LabeledStatement();
+            node = new ParserAPI.node.LabeledStatement();
             for (i = 0, leni = state.labels.length; i < leni; ++i)
                 if (state.labels[i].name === maybeName) raise(state, state.tokPos, 'Label \'' +maybeName+ '\' is already declared');
-            var label = new Label(maybeName);
+            label = new Label(maybeName);
             switch(state.tokType) {
                 case state._do:
                 case state._for:
@@ -2765,25 +2630,18 @@
             state.labels.pop();
             node.label = expr;
         } else {
-            node = newExpressionStatement();
+            node = new ParserAPI.node.ExpressionStatement();
             node.expression = expr;
             semicolon(state);
-        }
-        if(state.locations === true) {
-            node.loc.start = expr.loc.start;
-            node.loc.end = lastEndLoc;
         }
         return node;
 
     }
 
     function parse_ExpressionStatement(state) {
-        var node = new ExpressionStatement();
+        var node = new ParserAPI.node.ExpressionStatement();
         node.expression = parseExpression(state, false);
         semicolon(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -2819,6 +2677,7 @@
             case state._with: return parse_WithStatement(state);
             case state._slash:
                 readToken_forceRegexp(state);
+                return parse_ExpressionStatement(state);
             default:
                 return parse_ExpressionStatement(state);
         }
@@ -2842,7 +2701,7 @@
     // function bodies).
 
     function parse_BlockStatement(state) {
-        var node = new BlockStatement();
+        var node = new ParserAPI.node.BlockStatement();
         var _strict = false;
         var oldStrict;
         if(state.tokType !== state._braceL) { unexpected(state); }
@@ -2865,9 +2724,6 @@
         }
         if (_strict && !oldStrict) setStrict(state, false);
 
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -2876,7 +2732,7 @@
     // expression.
 
     function parse_ForStatement(state) {
-        var node = new ForStatement();
+        var node = new ParserAPI.node.ForStatement();
         if(state.tokType !== state._semi) { unexpected(state); }
         next(state);
         if (state.tokType !== state._semi) node.test = parseExpression(state, false);
@@ -2886,42 +2742,33 @@
         if(state.tokType !== state._parenR) { unexpected(state); }
         next(state);
         node.body = parseStatement(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse a 'for ( in ) {}' loop.
     function parse_ForInStatement(state) {
-        var node = new ForInStatement();
+        var node = new ParserAPI.node.ForInStatement();
         node.right = parseExpression(state, false);
         if(state.tokType !== state._parenR) { unexpected(state); }
         next(state);
         node.body = parseStatement(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse a 'for ( of ) {}' loop.
     function parse_ForOfStatement(state) {
-        var node = new ForOfStatement();
+        var node = new ParserAPI.node.ForOfStatement();
         node.right = parseExpression(state, false);
         if(state.tokType !== state._parenR) { unexpected(state); }
         next(state);
         node.body = parseStatement(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     // Parse a list of variable declarations.
     function parseVar(state, node, noIn) {
         for (;;) {
-            var decl = new VariableDeclarator();
+            var decl = new ParserAPI.node.VariableDeclarator();
             decl.id = parse_Identifier(state);
             if (state.strict && isStrictBadIdWord(decl.id.name))
                 raise(state, state.tokPos, 'Binding ' + decl.id.name + ' in strict mode');
@@ -2930,9 +2777,6 @@
                 decl.init = parseMaybeAssign(state, noIn);
             } else if(node.kind === state._const) {
                 unexpected(state);
-            }
-            if(state.locations === true) {
-                decl.loc.end = lastEndLoc;
             }
             node.declarations.push(decl);
             if (state.tokType !== state._comma) break;
@@ -2955,15 +2799,11 @@
     function parseExpression(state, noIn) {
         var expr = parseMaybeAssign(state, noIn);
         if (state.tokType === state._comma) {
-            var node = new SequenceExpression();
+            var node = new ParserAPI.node.SequenceExpression();
             node.expressions.push(expr);
             while (state.tokType === state._comma) {
                 next(state);
                 node.expressions.push(parseMaybeAssign(state, noIn));
-            }
-            if(state.locations === true) {
-                node.loc.start = expr.loc.start;
-                node.loc.end = lastEndLoc;
             }
             return node;
         }
@@ -2976,16 +2816,12 @@
     function parseMaybeAssign(state, noIn) {
         var left = parseMaybeConditional(state, noIn);
         if (state.tokType.isAssign) {
-            var node = new AssignmentExpression();
+            var node = new ParserAPI.node.AssignmentExpression();
             node.operator = state.tokVal;
             node.left = left;
             next(state);
             node.right = parseMaybeAssign(state, noIn);
             checkLVal(state, left);
-            if(state.locations === true) {
-                node.loc.start = left.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return node;
         }
         return left;
@@ -2997,16 +2833,12 @@
         var expr = parseExprOp(state, parseMaybeUnary(state), state._bin_minop, noIn);
         if (state.tokType === state._question) {
             next(state);
-            var node = new ConditionalExpression();
+            var node = new ParserAPI.node.ConditionalExpression();
             node.test = expr;
             node.consequent = parseMaybeAssign(state, false);
             if(state.tokType !== state._colon) { unexpected(state); }
             next(state);
             node.alternate = parseMaybeAssign(state, noIn);
-            if(state.locations === true) {
-                node.loc.start = expr.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return node;
         }
         return expr;
@@ -3026,19 +2858,15 @@
 
         if (curTokType.precedence !== 0 && curTokType.precedence > minTokType.precedence && (!noIn || state.tokType !== state._in)) {
 
-            if (state.tokVal === state.LogicalOperator.AND || state.tokVal === state.LogicalOperator.OR) {
-                node = new LogicalExpression();
+            if (state.tokVal === ParserAPI.LogicalOperator.AND || state.tokVal === ParserAPI.LogicalOperator.OR) {
+                node = new ParserAPI.node.LogicalExpression();
             } else {
-                node = new BinaryExpression();
+                node = new ParserAPI.node.BinaryExpression();
             }
             node.left = left;
             node.operator = state.tokVal;
             next(state);
             node.right = parseExprOp(state, parseMaybeUnary(state), curTokType, noIn);
-            if(state.locations === true) {
-                node.loc.start = node.left.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseExprOp(state, node, minTokType, noIn);
         }
         return left;
@@ -3052,29 +2880,26 @@
         var node = null;
         if (state.tokType.prefix) {
             if (state.tokType === state._incdec) {
-                node = new UpdateExpression();
+                node = new ParserAPI.node.UpdateExpression();
                 node.operator = state.tokVal;
                 state.tokRegexpAllowed = true;
                 next(state);
                 node.argument = parseMaybeUnary(state);
                 checkLVal(state, node.argument);
             } else {
-                node = new UnaryExpression();
+                node = new ParserAPI.node.UnaryExpression();
                 node.operator = state.tokVal;
                 state.tokRegexpAllowed = true;
                 next(state);
                 node.argument = parseMaybeUnary(state);
                 if (state.strict && node.operator === _delete_str &&
-                             node.argument.type === sIdentifier)
+                             node.argument.type === ParserAPI.type.IDENTIFIER)
                 raise(state, state.tokPos, 'Deleting local variable in strict mode');
             }
         } else {
             var expr = parseExprSubscripts(state);
             while (state.tokType === state._incdec && cannotInsertSemicolon(state)) {
-                node = new UpdateExpression();
-                if(state.locations === true) {
-                    node.loc.start = expr.loc.start;
-                }
+                node = new ParserAPI.node.UpdateExpression();
                 node.operator = state.tokVal;
                 node.prefix = false;
                 node.argument = expr;
@@ -3083,9 +2908,6 @@
                 expr = node;
             }
             node = expr;
-        }
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
         }
         return node;
     }
@@ -3100,13 +2922,9 @@
         var node = null;
         if (state.tokType === state._dot) {
             next(state);
-            node = newMemberExpression_dot();
+            node = new MemberExpression_dot();
             node.object = base;
             node.property = parse_Identifier_liberal(state);
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseSubscripts(state, node);
 
         } else if (state.tokType === state._bracketL) {
@@ -3115,20 +2933,12 @@
             node.property = parseExpression(state, false);
             if(state.tokType !== state._bracketR) { unexpected(state); }
             next(state);
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseSubscripts(state, node);
 
         } else if (state.tokType === state._parenL) {
             next(state);
-            node = new CallExpression(base);
+            node = new ParserAPI.node.CallExpression(base);
             parse_ExpressionList(state, node.arguments);
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseSubscripts(state, node);
 
         } else {
@@ -3140,13 +2950,9 @@
         var node = null;
         if (state.tokType === state._dot) {
             next(state);
-            node = newMemberExpression_dot();
+            node = new MemberExpression_dot();
             node.object = base;
             node.property = parse_Identifier_liberal(state);
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseSubscripts_nocalls(state, node);
 
         } else if (state.tokType === state._bracketL) {
@@ -3155,10 +2961,6 @@
             node.property = parseExpression(state, false);
             if(state.tokType !== state._bracketR) { unexpected(state); }
             next(state);
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
             return parseSubscripts_nocalls(state, node);
 
         } else {
@@ -3172,98 +2974,66 @@
     // or `{}`.
 
     function parse_ThisExpression(state) {
-        var node = new ThisExpression();
+        var node = new ParserAPI.node.ThisExpression();
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     function parse_Literal_Number(state) {
-        var node = newLiteralNumber();
+        var node = new ParserAPI.node.Literal();
         node.value = state.tokVal;
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     function parse_Literal_String(state) {
-        var node = new Literal_string();
+        var node = new ParserAPI.node.Literal();
         node.value = state.tokVal;
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     function parse_Literal_Regexp(state) {
-        var node = new Literal_regexp();
+        var node = new ParserAPI.node.Literal();
         node.value = state.tokVal;
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     function parse_Literal_Null(state) {
-        var node = new Literal_null();
+        var node = new ParserAPI.node.Literal();
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
     function parse_Literal_True(state) {
-        var node = new Literal_true();
+        var node = new ParserAPI.node.Literal();
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
     function parse_Literal_False(state) {
-        var node = new Literal_false();
+        var node = new ParserAPI.node.Literal();
         next(state);
-        node.loc.end = lastEndLoc;
         return node;
     }
 
     function parseExprAtom_parenL(state) {
-        if(state.locations === true) {
-            var tokStartLoc1 = tokStartLoc;
-        }
         next(state);
         var val = parseExpression(state, false);
-        if(state.locations === true) {
-            val.loc.start = tokStartLoc1;
-            val.loc.end = tokEndLoc;
-        }
         if(state.tokType !== state._parenR) { unexpected(state); }
         next(state);
         return val;
     }
 
     function parse_ArrayExpression(state) {
-        var node = new ArrayExpression();
+        var node = new ParserAPI.node.ArrayExpression();
         next(state);
         parse_ArrayExpressionList(state, node.elements);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
     function parse_FunctionExpression(state) {
-        var node = new FunctionExpression();
+        var node = new ParserAPI.node.FunctionExpression();
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return parseFunction(state, node);
     }
 
@@ -3293,15 +3063,12 @@
     // least, not without wrapping it in parentheses. Thus, it uses the
 
     function parse_NewExpression(state) {
-        var node = new NewExpression();
+        var node = new ParserAPI.node.NewExpression();
         next(state);
         node.callee = parseSubscripts_nocalls(state, parseExprAtom(state, false));
         if (state.tokType === state._parenL) {
             next(state);
             parse_ExpressionList(state, node.arguments);
-        }
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
         }
         return node;
     }
@@ -3321,17 +3088,17 @@
     // init properties are also not allowed to be repeated.
 
     function parseGetterOrSetter(state, prop) {
-        if (state.ecmaVersion >= 5 && prop.key.type === sIdentifier) {
+        if (state.ecmaVersion >= 5 && prop.key.type === ParserAPI.type.IDENTIFIER) {
             if (prop.key.name === 'get') {
                 prop.kind = state.PropertyKind.get;
                 prop.key = parsePropertyName(state);
                 if (state.tokType !== state._parenL) unexpected(state);
-                prop.value = parseFunction(state, new FunctionExpression());
+                prop.value = parseFunction(state, new ParserAPI.node.FunctionExpression());
             } else if (prop.key.name === 'set') {
                 prop.kind = state.PropertyKind.set;
                 prop.key = parsePropertyName(state);
                 if (state.tokType !== state._parenL) unexpected(state);
-                prop.value = parseFunction(state, new FunctionExpression());
+                prop.value = parseFunction(state, new ParserAPI.node.FunctionExpression());
             } else unexpected(state);
         } else unexpected(state);
     }
@@ -3341,10 +3108,10 @@
 
         for(;j<len;j++) {
             prop = props[j];
-            if (prop.key.type === sIdentifier) {
+            if (prop.key.type === ParserAPI.type.IDENTIFIER) {
                 for (i=j+1;i<len;i++) {
                     other = props[i];
-                    if (other.key.type === sIdentifier && other.key.name === prop.key.name) {
+                    if (other.key.type === ParserAPI.type.IDENTIFIER && other.key.name === prop.key.name) {
                         if (
                             (prop.kind === other.kind && (state.strict || prop.kind !== state.PropertyKind.init)) ||
                             (other.kind === state.PropertyKind.init && prop.kind !== state.PropertyKind.init) ||
@@ -3359,7 +3126,7 @@
     }
 
     function parse_ObjectExpression(state) {
-        var node = new ObjectExpression();
+        var node = new ParserAPI.node.ObjectExpression();
         next(state);
 
         if (state.tokType !== state._braceR) {
@@ -3389,9 +3156,6 @@
 
         next(state);
         validateObjectProperties(state, node.properties);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -3453,9 +3217,6 @@
                     raise(state, state.tokPos, 'Argument name clash in strict mode');
             }
         }
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
 
         return node;
     }
@@ -3511,13 +3272,10 @@
     // identifiers.
 
     function parse_Identifier_liberal(state) {
-        var node = newIdentifier();
+        var node = new ParserAPI.node.Identifier();
         node.name = state.tokType === state._name ? state.tokVal : (!state.forbidReserved && state.tokType.keyword) || unexpected(state);
         state.tokRegexpAllowed = false;
         next(state);
-        if(state.locations === true) {
-            node.loc.end = lastEndLoc;
-        }
         return node;
     }
 
@@ -3525,13 +3283,10 @@
         if (state.tokType !== state._name) {
             unexpected(state);
         } else {
-            var node = newIdentifier();
+            var node = new ParserAPI.node.Identifier();
             node.name = state.tokVal;
             state.tokRegexpAllowed = false;
             next(state);
-            if(state.locations === true) {
-                node.loc.end = lastEndLoc;
-            }
             return node;
         }
     }
