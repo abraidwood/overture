@@ -37,6 +37,7 @@
         IF_STATEMENT: new String('IfStatement'),
         LABELED_STATEMENT: new String('LabeledStatement'),
         BREAK_STATEMENT: new String('BreakStatement'),
+        CONTINUE_STATEMENT: new String('ContinueStatement'),
         WITH_STATEMENT: new String('WithStatement'),
         SWITCH_STATEMENT: new String('SwitchStatement'),
         RETURN_STATEMENT: new String('ReturnStatement'),
@@ -76,6 +77,12 @@
         LITERAL: new String('Literal')
     };
 
+    var methods = {
+        getSourceLocation: function() {
+            return null;
+        }
+    };
+
     // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
     var nodes = {
 
@@ -83,164 +90,164 @@
 
         'Program': function Program() {
             this.type = types.PROGRAM;
-            this.body = [];                     // [ Statement ]
-            this.loc = null;                    // SourceLocation | null
+            this.body = [];                             // [ Statement ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A complete program source tree.
 
         'SourceLocation': function SourceLocation() {
-            this.start = null;                  // Position
-            this.end = null;                    // Position
-            this.source = null;                 // string | null
+            this.start = null;                          // Position
+            this.end = null;                            // Position
+            this.source = null;                         // string | null
         },
         // The loc field represents the source location information of the node. If the parser produced no information about the node's source location, the field is null; otherwise it is an object consisting of a start position (the position of the first character of the parsed source region) and an end position (the position of the first character after the parsed source region):
 
         // Each Position object consists of a line number (1-indexed) and a column number (0-indexed):
         'Position': function Position() {
-            this.line = 1;                      // number >= 1
-            this.column = 0;                    // number >= 0
+            this.line = 1;                              // number >= 1
+            this.column = 0;                            // number >= 0
         },
 
         // ### Statements
 
         'EmptyStatement': function EmptyStatement() {
             this.type = types.EMPTY_STATEMENT;
-            this.loc = null;                    // SourceLocation | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An empty statement, i.e., a solitary semicolon.
 
         'BlockStatement': function BlockStatement() {
             this.type = types.BLOCK_STATEMENT;
-            this.body = [];                     // [ Statement ]
-            this.loc = null;                    // SourceLocation | null
+            this.body = [];                             // [ Statement ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A block statement, i.e., a sequence of statements surrounded by braces.
 
         'ExpressionStatement': function ExpressionStatement() {
             this.type = types.EXPRESSION_STATEMENT;
-            this.expression = null;             // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.expression = null;                     // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An expression statement, i.e., a statement consisting of a single expression.
 
         'IfStatement': function IfStatement() {
             this.type = types.IF_STATEMENT;
-            this.test = null;                   // Expression
-            this.consequent = null;             // Statement
-            this.alternate = null;              // Statement | null
-            this.loc = null;                    // SourceLocation | null
+            this.test = null;                           // Expression
+            this.consequent = null;                     // Statement
+            this.alternate = null;                      // Statement | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An if statement.
 
         'LabeledStatement': function LabeledStatement() {
             this.type = types.LABELED_STATEMENT;
-            this.label = null;                  // Identifier
-            this.body = null;                   // Statement
-            this.loc = null;                    // SourceLocation | null
+            this.label = null;                          // Identifier
+            this.body = null;                           // Statement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A labeled statement, i.e., a statement prefixed by a break/continue label.
 
         'BreakStatement': function BreakStatement() {
             this.type = types.BREAK_STATEMENT;
-            this.label = null;                  // Identifier | null
-            this.loc = null;                    // SourceLocation | null
+            this.label = null;                          // Identifier | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A break statement.
 
         'ContinueStatement': function ContinueStatement() {
             this.type = types.CONTINUE_STATEMENT;
-            this.label = null;                  // Identifier | null
-            this.loc = null;                    // SourceLocation | null
+            this.label = null;                          // Identifier | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A continue statement.
 
         'WithStatement': function WithStatement() {
             this.type = types.WITH_STATEMENT;
-            this.object = null;                 // Expression
-            this.body = null;                   // Statement
-            this.loc = null;                    // SourceLocation | null
+            this.object = null;                         // Expression
+            this.body = null;                           // Statement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A with statement.
 
         'SwitchStatement': function SwitchStatement() {
             this.type = types.SWITCH_STATEMENT;
-            this.discriminant = null;           // Expression
-            this.cases = [];                    // [ SwitchCase ]
-            this.lexical = false;               // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.discriminant = null;                   // Expression
+            this.cases = [];                            // [ SwitchCase ]
+            this.lexical = false;                       // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A switch statement. The lexical flag is metadata indicating whether the switch statement contains any unnested let declarations (and therefore introduces a new lexical scope).
 
         'ReturnStatement': function ReturnStatement() {
             this.type = types.RETURN_STATEMENT;
-            this.argument = null;               // Expression | null
-            this.loc = null;                    // SourceLocation | null
+            this.argument = null;                       // Expression | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A return statement.
 
         'ThrowStatement': function ThrowStatement() {
             this.type = types.THROW_STATEMENT;
-            this.argument = null;               // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.argument = null;                       // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A throw statement.
 
         'TryStatement': function TryStatement() {
             this.type = types.TRY_STATEMENT;
-            this.block = null;                  // BlockStatement
-            this.handler = null;                // CatchClause | null
-            this.finalizer = null;              // BlockStatement | null
-            this.loc = null;                    // SourceLocation | null
+            this.block = null;                          // BlockStatement
+            this.handler = null;                        // CatchClause | null
+            this.finalizer = null;                      // BlockStatement | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A try statement.
 
         'WhileStatement': function WhileStatement() {
             this.type = types.WHILE_STATEMENT;
-            this.body = null;                   // Statement
-            this.test = null;                   // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.body = null;                           // Statement
+            this.test = null;                           // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A while statement
 
         'DoWhileStatement': function DoWhileStatement() {
             this.type = types.DOWHILE_STATEMENT;
-            this.body = null;                   // Statement
-            this.test = null;                   // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.body = null;                           // Statement
+            this.test = null;                           // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A do/while statement.
 
         'ForStatement': function ForStatement() {
             this.type = types.FOR_STATEMENT;
-            this.init = null;                   // VariableDeclaration | Expression | null
-            this.test = null;                   // Expression | null
-            this.update = null;                 // Expression | null
-            this.body = null;                   // Statement
-            this.loc = null;                    // SourceLocation | null
+            this.init = null;                           // VariableDeclaration | Expression | null
+            this.test = null;                           // Expression | null
+            this.update = null;                         // Expression | null
+            this.body = null;                           // Statement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A for statement.
 
         'ForInStatement': function ForInStatement() {
             this.type = types.FORIN_STATEMENT;
-            this.left = null;                   // VariableDeclaration |  Expression
-            this.right = null;                  // Expression
-            this.body = null;                   // Statement
-            this.loc = null;                    // SourceLocation | null
+            this.left = null;                           // VariableDeclaration |  Expression
+            this.right = null;                          // Expression
+            this.body = null;                           // Statement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A for/in statement, or, if each is true, a for each/in statement.
 
         'ForOfStatement': function ForOfStatement() {
             this.type = types.FOROF_STATEMENT;
-            this.left = null;                   // VariableDeclaration |  Expression
-            this.right = null;                  // Expression
-            this.body = null;                   // Statement
-            this.loc = null;                    // SourceLocation | null
+            this.left = null;                           // VariableDeclaration |  Expression
+            this.right = null;                          // Expression
+            this.body = null;                           // Statement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A for/of statement.
 
         'DebuggerStatement': function DebuggerStatement() {
             this.type = types.DEBUGGER_STATEMENT;
-            this.loc = null;                    // SourceLocation | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A debugger statement.
 
@@ -248,30 +255,30 @@
 
         'FunctionDeclaration': function FunctionDeclaration() {
             this.type = types.FUNCTION_DECLARATION;
-            this.id = null;                     // Identifier
-            this.params = [];                   // [ Pattern ]
-            this.defaults = [];                 // [ Expression ]
-            this.rest = null;                   // Identifier | null
-            this.body = null;                   // BlockStatement | Expression
-            this.expression = false;            // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.id = null;                             // Identifier
+            this.params = [];                           // [ Pattern ]
+            this.defaults = [];                         // [ Expression ]
+            this.rest = null;                           // Identifier | null
+            this.body = null;                           // BlockStatement | Expression
+            this.expression = false;                    // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A function declaration.
         // Note: The id field cannot be null.
 
         'VariableDeclaration': function VariableDeclaration(state) {
             this.type = types.VARIABLE_DECLARATION;
-            this.declarations = [];             // [ VariableDeclarator ]
-            this.kind = state.tokType;          // "var" | "let" | "const"
-            this.loc = null;                    // SourceLocation | null
+            this.declarations = [];                     // [ VariableDeclarator ]
+            this.kind = state.tokType;                  // "var" | "let" | "const"
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A variable declaration, via one of var, let, or const.
 
         'VariableDeclarator': function VariableDeclarator() {
             this.type = types.VARIABLE_DECLARATOR;
-            this.id = null;                     // Pattern
-            this.init = null;                   // Expression | null
-            this.loc = null;                    // SourceLocation | null
+            this.id = null;                             // Pattern
+            this.init = null;                           // Expression | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A variable declarator.
         // Note: The id field cannot be null.
@@ -280,119 +287,119 @@
 
         'ThisExpression': function ThisExpression() {
             this.type = types.THIS_EXPRESSION;
-            this.loc = null;                    // SourceLocation | null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A this expression.
 
         'ArrayExpression': function ArrayExpression() {
             this.type = types.ARRAY_EXPRESSION;
-            this.elements = [];                 // [ Expression | null ]
-            this.loc = null;                    // SourceLocation | null
+            this.elements = [];                         // [ Expression | null ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An array expression.
 
         'ObjectExpression': function ObjectExpression() {
             this.type = types.OBJECT_EXPRESSION;
-            this.properties = [];               // [ ObjectExpressionProp ]
-            this.loc = null;                    // SourceLocation | null
+            this.properties = [];                       // [ ObjectExpressionProp ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An object expression. A literal property in an object expression can have either a string or number as its value. Ordinary property initializers have a kind value "init"; getters and setters have the kind values "get" and "set", respectively.
 
         'FunctionExpression': function FunctionExpression() {
             this.type = types.FUNCTION_EXPRESSION;
-            this.id = null;                     // Identifier | null
-            this.params = [];                   // [ Pattern ]
-            this.defaults = [];                 // [ Expression ]
-            this.rest = null;                   // Identifier | null
-            this.body = null;                   // BlockStatement | Expression
-            this.expression = false;            // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.id = null;                             // Identifier | null
+            this.params = [];                           // [ Pattern ]
+            this.defaults = [];                         // [ Expression ]
+            this.rest = null;                           // Identifier | null
+            this.body = null;                           // BlockStatement | Expression
+            this.expression = false;                    // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A function expression.
 
         'SequenceExpression': function SequenceExpression() {
             this.type = types.SEQUENCE_EXPRESSION;
-            this.expressions = [];              // [ Expression ]
-            this.loc = null;                    // SourceLocation | null
+            this.expressions = [];                      // [ Expression ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A sequence expression, i.e., a comma-separated sequence of expressions.
 
         'UnaryExpression': function UnaryExpression() {
             this.type = types.UNARY_EXPRESSION;
-            this.operator = null;               // state.UnaryOperator
-            this.argument = null;               // Expression
-            this.prefix = true;                 // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.operator = null;                       // state.UnaryOperator
+            this.argument = null;                       // Expression
+            this.prefix = true;                         // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A unary operator expression.
 
         'BinaryExpression': function BinaryExpression() {
             this.type = types.BINARY_EXPRESSION;
-            this.operator = null;               // state.BinaryOperator
-            this.left = null;                   // Expression
-            this.right = null;                  // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.operator = null;                       // state.BinaryOperator
+            this.left = null;                           // Expression
+            this.right = null;                          // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A binary operator expression.
 
         'AssignmentExpression': function AssignmentExpression() {
             this.type = types.ASSIGNMENT_EXPRESSION;
-            this.operator = null;               // state.AssignmentOperator
-            this.left = null;                   // Expression
-            this.right = null;                  // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.operator = null;                       // state.AssignmentOperator
+            this.left = null;                           // Expression
+            this.right = null;                          // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An assignment operator expression.
 
         'UpdateExpression': function UpdateExpression() {
             this.type = types.UPDATE_EXPRESSION;
-            this.operator = null;               // state.UpdateOperator
-            this.argument = null;               // Expression
-            this.prefix = true;                 // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.operator = null;                       // state.UpdateOperator
+            this.argument = null;                       // Expression
+            this.prefix = true;                         // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An update (increment or decrement) operator expression.
 
         'LogicalExpression': function LogicalExpression() {
             this.type = types.LOGICAL_EXPRESSION;
-            this.operator = null;               // state.LogicalOperator
-            this.left = null;                   // Expression
-            this.right = null;                  // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.operator = null;                       // state.LogicalOperator
+            this.left = null;                           // Expression
+            this.right = null;                          // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A logical operator expression.
 
         'ConditionalExpression': function ConditionalExpression() {
             this.type = types.CONDITIONAL_EXPRESSION;
-            this.test = null;                   // Expression
-            this.consequent = null;             // Expression
-            this.alternate = null;              // Expression
-            this.loc = null;                    // SourceLocation | null
+            this.test = null;                           // Expression
+            this.consequent = null;                     // Expression
+            this.alternate = null;                      // Expression
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A conditional expression, i.e., a ternary ?/: expression.
 
         'NewExpression': function NewExpression() {
             this.type = types.NEW_EXPRESSION;
-            this.callee = null;                 // Expression
-            this.arguments = [];                // [ Expression | null ]
-            this.loc = null;                    // SourceLocation | null
+            this.callee = null;                         // Expression
+            this.arguments = [];                        // [ Expression | null ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A new expression.
 
         'CallExpression': function CallExpression(callee) {
             this.type = types.CALL_EXPRESSION;
-            this.callee = callee;               // Expression
-            this.arguments = [];                // [ Expression | null ]
-            this.loc = null;                    // SourceLocation | null
+            this.callee = callee;                       // Expression
+            this.arguments = [];                        // [ Expression | null ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A function or method call expression.
 
         'MemberExpression': function MemberExpression() {
             this.type = types.MEMBER_EXPRESSION;
-            this.object = null;                 // Expression
-            this.property = null;               // Identifier | Expression
-            this.computed = false;              // boolean
-            this.loc = null;                    // SourceLocation | null
+            this.object = null;                         // Expression
+            this.property = null;                       // Identifier | Expression
+            this.computed = false;                      // boolean
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
 
@@ -400,17 +407,17 @@
 
         'SwitchCase': function SwitchCase() {
             this.type = types.SWITCH_CASE;
-            this.test = null;                   // Expression | null
-            this.consequent = [];               // [ Statement ]
-            this.loc = null;                    // SourceLocation | null
+            this.test = null;                           // Expression | null
+            this.consequent = [];                       // [ Statement ]
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A case (if test is an Expression) or default (if test === null) clause in the body of a switch statement.
 
         'CatchClause': function CatchClause() {
             this.type = types.CATCH_CLAUSE;
-            this.param = null;                  // Pattern
-            this.body = null;                   // BlockStatement
-            this.loc = null;                    // SourceLocation | null
+            this.param = null;                          // Pattern
+            this.body = null;                           // BlockStatement
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A catch clause following a try block. The optional guard property corresponds to the optional expression guard on the bound variable.
 
@@ -418,15 +425,52 @@
 
         'Identifier': function Identifier() {
             this.type = types.IDENTIFIER;
-            this.name = '';                     // string
-            this.loc = null;                    // SourceLocation | null
+            this.name = '';                             // string
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // An identifier. Note that an identifier may be an expression or a destructuring pattern.
 
         'Literal': function Literal() {
             this.type = types.LITERAL;
-            this.value = null;                  // number
-            this.loc = null;                    // SourceLocation | null
+            this.value = null;                          // string | boolean | null | number | RegExp
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+
+        'LiteralNumber': function LiteralNumber() {
+            this.type = types.LITERAL;
+            this.value = 0;                             // number
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+        'LiteralString': function LiteralString() {
+            this.type = types.LITERAL;
+            this.value = '';                            // string
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+        'LiteralNull': function LiteralNull() {
+            this.type = types.LITERAL;
+            this.value = null;                          // null
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+        'LiteralRegExp': function LiteralRegExp() {
+            this.type = types.LITERAL;
+            this.value = null;                          // RegExp
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+        'LiteralTrue': function LiteralTrue() {
+            this.type = types.LITERAL;
+            this.value = true;                          // boolean true
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
+        },
+        // A literal token. Note that a literal can be an expression.
+        'LiteralFalse': function LiteralFalse() {
+            this.type = types.LITERAL;
+            this.value = false;                         // boolean false
+            this.loc = methods.getSourceLocation();     // SourceLocation | null
         },
         // A literal token. Note that a literal can be an expression.
     };
@@ -500,6 +544,8 @@
 
     exports.type = types;
     exports.node = nodes;
+
+    exports.methods = methods;
 
     exports.AssignmentOperator = operators.AssignmentOperator;
     exports.BinaryOperator = operators.BinaryOperator;
@@ -589,7 +635,10 @@
             onComment: null,
             ranges: false,
             program: null,
-            sourceFile: null
+            sourceFile: null,
+            _word: '',
+            tokStartLoc: null
+
         };
         buildState(state);
 
@@ -605,11 +654,17 @@
         }
         sourceFile = state.sourceFile || null;
 
-        if(sourceFile !== null) {
-            SourceLocation = SourceLocation_WithFile;
-        }
-
-        checkReserved = state.forbidReserved ? __checkReserved : noop;
+        ParserAPI.methods.getSourceLocation = state.locations ?
+            function(_state) {
+                return function getSourceLocation_on() {
+                    var s = new ParserAPI.node.SourceLocation();
+                    s.start = _state.tokStartLoc;
+                    s.source = sourceFile;
+                    return s;
+                };
+            }(state) : function getSourceLocation_off() {
+                return null;
+            };
 
         isKeyword = state.ecmaVersion >= 6 ? isES6Keyword : isES5Keyword;
 
@@ -716,7 +771,7 @@
     // When `state.locations` is true, these hold objects
     // containing the tokens start and end line/column pairs.
 
-    var tokStartLoc, tokEndLoc;
+    var tokEndLoc;
     var tokCurLine = 1, tokLineStart = 0;
 
     // The type and value of the current token. Token types are objects,
@@ -778,38 +833,11 @@
     function Node(type) {
         this.type = type || null;           // 'string'
         // @if LOCATIONS=true
-        this.loc = new SourceLocation();    // SourceLocation | null
+        this.loc = new ParserAPI.node.SourceLocation();    // SourceLocation | null
         // @endif
     }
 
     // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
-
-    // The loc field represents the source location information of the node. If the parser produced no information about the node's source location, the field is null; otherwise it is an object consisting of a start position (the position of the first character of the parsed source region) and an end position (the position of the first character after the parsed source region):
-
-    var getSourceLocation_off = function getSourceLocation() {
-        return null;
-    };
-
-    var getSourceLocation_on = function getSourceLocation() {
-        return null;
-    };
-
-    function SourceLocation() {
-        this.start = tokStartLoc;        // Position
-        this.end = null;                 // Position
-    }
-
-    function SourceLocation_WithFile() {
-        this.start = tokStartLoc;        // Position
-        this.end = null;                    // Position
-        this.source = sourceFile;       // string | null
-    }
-
-    // Each Position object consists of a line number (1-indexed) and a column number (0-indexed):
-    function Position(state) {
-        this.line = tokCurLine;             // number >= 1
-        this.column = state.tokPos - tokLineStart;// number >= 0
-    }
 
 
 
@@ -823,7 +851,7 @@
         this.property = null;               // Identifier | Expression
         this.computed = false;              // boolean
         // @if LOCATIONS=true
-        this.loc = new SourceLocation();    // SourceLocation | null
+        this.loc = new ParserAPI.node.SourceLocation();    // SourceLocation | null
         // @endif
     };
 
@@ -833,7 +861,7 @@
         this.property = null;               // Identifier | Expression
         this.computed = true;               // boolean
         // @if LOCATIONS=true
-        this.loc = new SourceLocation();    // SourceLocation | null
+        this.loc = new ParserAPI.node.SourceLocation();    // SourceLocation | null
         // @endif
     };
 
@@ -967,6 +995,10 @@
             'get': new String('get'),
             'set': new String('set')
         };
+
+        state._numstart = 0;
+        state._numflags = 0;
+        state._numprev = 0;
     }
 
 
@@ -1000,26 +1032,26 @@
 
     // The ECMAScript 3 reserved word list.
 
-    function isReservedWord3(str) {
-        switch (str.length) {
+    function isReservedWord3(state) {
+        switch (state._word.length) {
         case 3:
-            return str==='int';
+            return state._word==='int';
         case 4:
-            return str==='byte'||str==='char'||str==='enum'||str==='goto'||str==='long';
+            return state._word==='byte'||state._word==='char'||state._word==='enum'||state._word==='goto'||state._word==='long';
         case 5:
-            return str==='class'||str==='final'||str==='float'||str==='short'||str==='super';
+            return state._word==='class'||state._word==='final'||state._word==='float'||state._word==='short'||state._word==='super';
         case 6:
-            return str==='double'||str==='export'||str==='import'||str==='native'||str==='public'||str==='static'||str==='throws';
+            return state._word==='double'||state._word==='export'||state._word==='import'||state._word==='native'||state._word==='public'||state._word==='static'||state._word==='throws';
         case 7:
-            return str==='boolean'||str==='extends'||str==='package'||str==='private';
+            return state._word==='boolean'||state._word==='extends'||state._word==='package'||state._word==='private';
         case 8:
-            return str==='abstract'||str==='volatile';
+            return state._word==='abstract'||state._word==='volatile';
         case 9:
-            return str==='interface'||str==='protected'||str==='transient';
+            return state._word==='interface'||state._word==='protected'||state._word==='transient';
         case 10:
-            return str==='implements';
+            return state._word==='implements';
         case 12:
-            return str==='synchronized';
+            return state._word==='synchronized';
         default:
             return false;
         }
@@ -1027,52 +1059,52 @@
 
     // ECMAScript 5 reserved words.
 
-    function isReservedWord5(str) {
-        switch (str.length) {
+    function isReservedWord5(state) {
+        switch (state._word.length) {
         case 4:
-            return str === 'enum';
+            return state._word === 'enum';
         case 5:
-            return str === 'class' || str === 'super';
+            return state._word === 'class' || state._word === 'super';
         case 6:
-            return str === 'export' || str === 'import';
+            return state._word === 'export' || state._word === 'import';
         case 7:
-            return str === 'extends';
+            return state._word === 'extends';
         default:
             return false;
         }
     }
     // The additional reserved words in strict mode.
 
-    function isStrictReservedWord(str) {
-        switch (str.length) {
+    function isStrictReservedWord(state) {
+        switch (state._word.length) {
         case 3:
-            return str === 'let';
+            return state._word === 'let';
         case 5:
-            return str === 'yield';
+            return state._word === 'yield';
         case 6:
-            return str === 'static' || str === 'public';
+            return state._word === 'static' || state._word === 'public';
         case 7:
-            return str === 'private' || str === 'package';
+            return state._word === 'private' || state._word === 'package';
         case 9:
-            return str === 'interface' || str === 'protected';
+            return state._word === 'interface' || state._word === 'protected';
         case 10:
-            return str === 'implements';
+            return state._word === 'implements';
         default:
             return false;
         }
     }
     // The forbidden variable names in strict mode.
 
-    function isStrictBadIdWord(str) {
-        return str === 'eval' || str === 'arguments';
+    function isStrictBadIdWord(state) {
+        return state._word === 'eval' || state._word === 'arguments';
     }
 
     // And the keywords.
 
-    function isES5Keyword(state, str) {
-        switch (state.tokPos - state.tokStart) {
+    function isES5Keyword(state) {
+        switch (state._word.length) {
         case 4:
-            switch (str) {
+            switch (state._word) {
             case 'null': return state._null;
             case 'true': return state._true;
             case 'this': return state._this;
@@ -1083,7 +1115,7 @@
             }
             break;
         case 5:
-            switch (str) {
+            switch (state._word) {
             case 'false': return state._false;
             case 'break': return state._break;
             case 'while': return state._while;
@@ -1092,7 +1124,7 @@
             }
             break;
         case 3:
-            switch (str) {
+            switch (state._word) {
             case 'var': return state._var;
             case 'for': return state._for;
             case 'try': return state._try;
@@ -1100,7 +1132,7 @@
             }
             break;
         case 6:
-            switch (str) {
+            switch (state._word) {
             case 'switch': return state._switch;
             case 'typeof': state.tokRegexpAllowed = true; return state._typeof;
             case 'delete': return state._delete;
@@ -1108,14 +1140,14 @@
             }
             break;
         case 8:
-            switch (str) {
+            switch (state._word) {
             case 'function': return state._function;
             case 'continue': return state._continue;
             case 'debugger': return state._debugger;
             }
             break;
         case 2:
-            switch (str) {
+            switch (state._word) {
             case 'if': return state._if;
             case 'do': return state._do;
             case 'in': state.tokRegexpAllowed = true; return state._in;
@@ -1123,45 +1155,28 @@
             }
             break;
         case 7:
-            switch (str) {
+            switch (state._word) {
             case 'default': return state._default;
             case 'finally': return state._finally;
             }
             break;
         case 10:
-            if (str === 'instanceof') {return state._instanceof;}
+            if (state._word === 'instanceof') {return state._instanceof;}
             break;
         }
-        if (state.forbidReserved && (state.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(str)) {
-            raise(state, state.tokStart, 'The keyword \'' + str + '\' is reserved');
-        } else if (state.strict && isStrictReservedWord(str)) {
-            raise(state, state.tokStart, 'The keyword \'' + str + '\' is reserved');
+        if (state.forbidReserved && (state.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(state)) {
+            raise(state, state.tokStart, 'The keyword \'' + state._word + '\' is reserved');
+        } else if (state.strict && isStrictReservedWord(state)) {
+            raise(state, state.tokStart, 'The keyword \'' + state._word + '\' is reserved');
         } else {
             return state._name;
         }
     }
 
-    var noop = function() {};
-
-    function __checkStrict(state, str) {
-        if (state.strict && isStrictReservedWord(str)) {
-            raise(state, state.tokStart, 'The keyword \'' + str + '\' is reserved');
-        }
-    }
-
-    function __checkReserved(state, str) {
-        if (state.forbidReserved && (state.ecmaVersion === 3 ? isReservedWord3 : isReservedWord5)(str)) {
-            raise(state, state.tokStart, 'The keyword \'' + str + '\' is reserved');
-        }
-    }
-
-    var checkStrict = noop;
-    var checkReserved = noop;
-
-    function isES6Keyword(state, str) {
+    function isES6Keyword(state) {
         switch (state.tokPos - state.tokStart) {
         case 4:
-            switch (str) {
+            switch (state._word) {
             case 'null': return state._null;
             case 'true': return state._true;
             case 'this': return state._this;
@@ -1172,7 +1187,7 @@
             }
             break;
         case 5:
-            switch (str) {
+            switch (state._word) {
             case 'false': return state._false;
             case 'break': return state._break;
             case 'while': return state._while;
@@ -1182,7 +1197,7 @@
             }
             break;
         case 3:
-            switch (str) {
+            switch (state._word) {
             case 'var': return state._var;
             case 'for': return state._for;
             case 'try': return state._try;
@@ -1191,7 +1206,7 @@
             }
             break;
         case 6:
-            switch (str) {
+            switch (state._word) {
             case 'switch': return state._switch;
             case 'typeof': state.tokRegexpAllowed = true; return state._typeof;
             case 'delete': return state._delete;
@@ -1199,14 +1214,14 @@
             }
             break;
         case 8:
-            switch (str) {
+            switch (state._word) {
             case 'function': return state._function;
             case 'continue': return state._continue;
             case 'debugger': return state._debugger;
             }
             break;
         case 2:
-            switch (str) {
+            switch (state._word) {
             case 'if': return state._if;
             case 'do': return state._do;
             case 'in': state.tokRegexpAllowed = true; return state._in;
@@ -1214,13 +1229,13 @@
             }
             break;
         case 7:
-            switch (str) {
+            switch (state._word) {
             case 'default': return state._default;
             case 'finally': return state._finally;
             }
             break;
         case 10:
-            if (str === 'instanceof') {return state._instanceof;}
+            if (state._word === 'instanceof') {return state._instanceof;}
             break;
         }
         return state._name;
@@ -1353,6 +1368,8 @@
         tokCurLine = 1;
         tokLineStart = 0;
         lastEndLoc = new ParserAPI.node.Position(state);
+        lastEndLoc.line = tokCurLine;
+        lastEndLoc.column = state.tokPos - tokLineStart;
         // @endif
         skipSpace(state);
     }
@@ -1364,6 +1381,8 @@
     function finishToken(state, type, val) {
         // @if LOCATIONS=true
         tokEndLoc = new ParserAPI.node.Position(state);
+        tokEndLoc.line = tokCurLine;
+        tokEndLoc.column = state.tokPos - tokLineStart;
         // @endif
         state.tokEnd = state.tokPos;
         state.tokType = type;
@@ -1391,13 +1410,11 @@
 
         // @if LOCATIONS=true
         _comment = state.input.slice(_start + 2, _end);
-        if (state.locations) {
-            var _match = _comment.match(lineBreak);
-            if(_match) {
-                tokCurLine += _match.length;
-                _lastMatch = _match[_match.length-1];
-                tokLineStart = state.input.lastIndexOf(_lastMatch,state.tokPos) + _lastMatch.length;
-            }
+        var _match = _comment.match(lineBreak);
+        if(_match) {
+            tokCurLine += _match.length;
+            _lastMatch = _match[_match.length-1];
+            tokLineStart = state.input.lastIndexOf(_lastMatch,state.tokPos) + _lastMatch.length;
         }
         // @endif
     }
@@ -1754,7 +1771,9 @@
         // readToken is necessarily big to avoid inlining in v8!
 
         // @if LOCATIONS=true
-        tokStartLoc = new ParserAPI.node.Position(state);
+        state.tokStartLoc = new ParserAPI.node.Position(state);
+        state.tokStartLoc.line = tokCurLine;
+        state.tokStartLoc.column = state.tokPos - tokLineStart;
         // @endif
 
         if (state.tokPos >= state.inputLen) {
@@ -1865,60 +1884,61 @@
             finishToken(state, state._num, _val);
         }
     }
-
     // Read an integer, octal integer, or floating-point number.
     //http://jsperf.com/readnumber/3
     function readNumber(state) {
-        var start = state.tokPos;
-        var flags = state.ch_ === 48 ? 8 : 0;    // FLOAT | EXP | OCTAL | ZERO-START
-        var prev = 0;
+        state._numstart = state.tokPos;
+        state._numflags = state.ch_ === 48 ? 8 : 0;    // FLOAT | EXP | OCTAL | ZERO-START
+        state._numprev = 0;
 
         while(state.tokPos < state.inputLen) {
-            if (state.ch_ === 56 || state.ch_ === 57) { // 89
-                flags |= 4;
-            } else if (state.ch_ === 46) { // '.'
-                if ((flags & 1) !== 0) {
+            if (state.ch_ < 48 || state.ch_ > 55) { // 0-7
+                if (state.ch_ === 56 || state.ch_ === 57) { // 89
+                    state._numflags |= 4;
+                } else if (state.ch_ === 46) { // '.'
+                    if ((state._numflags & 1) !== 0) {
+                        break;
+                    } else {
+                        state._numflags |= 1;
+                    }
+                } else if (state.ch_ === 43 || state.ch_ === 45) { // '+-'
+                    if (state._numprev !== 101 && state._numprev !== 69) { // 'eE'
+                        break;
+                    }
+                } else if (state.ch_ === 101 || state.ch_ === 69) { // 'eE'
+                    if ((state._numflags & 2) !== 0) {
+                        raise(state, state.tokPos, 'Identifier directly after number');
+                        break;
+                    } else {
+                        state._numflags |= 2;
+                    }
+                } else if (isIdentifierStart[state.input.charCodeAt(state.tokPos)]===true) {
+                    if ((state._numflags & 2) !== 0) {
+                        raise(state, state._numstart, 'Invalid number');
+                    } else {
+                        raise(state, state.tokPos, 'Identifier directly after number');
+                    }
                     break;
                 } else {
-                    flags |= 1;
-                }
-            } else if (state.ch_ === 43 || state.ch_ === 45) { // '+-'
-                if (prev !== 101 && prev !== 69) { // 'eE'
                     break;
                 }
-            } else if (state.ch_ === 101 || state.ch_ === 69) { // 'eE'
-                if ((flags & 2) !== 0) {
-                    raise(state, state.tokPos, 'Identifier directly after number');
-                    break;
-                } else {
-                    flags |= 3;
-                }
-            } else if (isIdentifierStart[state.input.charCodeAt(state.tokPos)]===true) {
-                if ((flags & 2) !== 0) {
-                    raise(state, start, 'Invalid number');
-                } else {
-                    raise(state, state.tokPos, 'Identifier directly after number');
-                }
-                break;
-            } else if (state.ch_ < 48 || state.ch_ > 57) { // 0-9
-                break;
             }
-            prev = state.ch_;
+            state._numprev = state.ch_;
             state.ch_ = state.input.charCodeAt(++state.tokPos);
         }
 
-        if ((flags & 3) !== 0 && (prev === 101 || prev === 69 || prev === 43 || prev === 45)) { // 'eE','+-'
-            raise(state, start, 'Invalid number');
+        if ((state._numflags & 2) !== 0 && (state._numprev === 101 || state._numprev === 69 || state._numprev === 43 || state._numprev === 45)) { // 'eE','+-'
+            raise(state, state._numstart, 'Invalid number');
         }
 
-        if ((flags & 1) !== 0) {
-            finishToken(state, state._num, parseFloat(state.input.substring(start, state.tokPos)));
-        } else if ((flags & 8) === 0 || (state.tokPos - start) === 1) {
-            finishToken(state, state._num, parseFloat(state.input.substring(start, state.tokPos)) | 0);
-        } else if (state.strict || (flags & 4) !== 0) {
-            raise(state, start, 'Invalid number');
+        if ((state._numflags & 1) !== 0) {
+            finishToken(state, state._num, parseFloat(state.input.substring(state._numstart, state.tokPos)));
+        } else if ((state._numflags & 8) === 0 || (state.tokPos - state._numstart) === 1) {
+            finishToken(state, state._num, parseFloat(state.input.substring(state._numstart, state.tokPos)) | 0);
+        } else if (state.strict || (state._numflags & 4) !== 0) {
+            raise(state, state._numstart, 'Invalid number');
         } else {
-            finishToken(state, state._num, parseInt(state.input.substring(start, state.tokPos), 8));
+            finishToken(state, state._num, parseInt(state.input.substring(state._numstart, state.tokPos), 8));
         }
 
         state.tokRegexpAllowed = false;
@@ -2047,10 +2067,6 @@
     // Read the mod characters which may immediately follow a RegExp
     // 'g', '\u0067', 'i', '\u0069', 'm', '\u006d', '\u006D'
 
-    var _regexp_g = 'g';
-    var _regexp_i = 'i';
-    var _regexp_m = 'm';
-
     var _start2 = 0;
     function readWord_regexpMods(state) {
         _start2 = state.tokPos;
@@ -2061,15 +2077,15 @@
         for (;state.tokPos<state.inputLen;) {
             if (state.ch_ === 103 && (_flags & 1) === 0) {
                 _flags |= 1;
-                _mods += _regexp_g;
+                _mods += 'g';
                 ++state.tokPos;
             } else if (state.ch_ === 105 && (_flags & 2) === 0) {
                 _flags |= 2;
-                _mods += _regexp_i;
+                _mods += 'i';
                 ++state.tokPos;
             } else if (state.ch_ === 109 && (_flags & 4) === 0) {
                 _flags |= 4;
-                _mods += _regexp_m;
+                _mods += 'm';
                 ++state.tokPos;
             } else if (state.ch_ === 92) { // \u006[79Dd]
                 if (
@@ -2081,15 +2097,15 @@
                     state.ch_ = state.input.charCodeAt(state.tokPos+5);
                     if (state.ch_ === 55 && (_flags & 1) === 0) {
                         _flags |= 1;
-                        _mods += _regexp_g;
+                        _mods += 'g';
                         state.tokPos += 6;
                     } else if (state.ch_ === 57 && (_flags & 2) === 0) {
                         _flags |= 2;
-                        _mods += _regexp_i;
+                        _mods += 'i';
                         state.tokPos += 6;
                     } else if ((state.ch_ === 68 || state.ch_ === 100) && (_flags & 4) === 0) {
                         _flags |= 4;
-                        _mods += _regexp_m;
+                        _mods += 'm';
                         state.tokPos += 6;
                     } else {
                         readHexChar(state, 4);
@@ -2141,9 +2157,9 @@
 
     // Read characters until one's not an allowed identifier char
     function readWord_simple(state) {
-        _start = state.tokPos;
+        var _start = state.tokPos;
         ++state.tokPos;
-        for (;state.tokPos<state.inputLen;) {
+        while (state.tokPos<state.inputLen) {
             state.ch_ = state.input.charCodeAt(state.tokPos);
             if (isIdentifierChar[state.ch_]===true) ++state.tokPos;
             else if (state.ch_ === 92)
@@ -2155,35 +2171,17 @@
 
     // Read an identifier or keyword token. Will check for strict reserved
     // words when necessary.
-    var _word;
     readWord = function readWord(state) {
         state.tokRegexpAllowed = false;
 
-        _word = readWord_simple(state);
-        if (_word.length > 1 && _word.length < 11) {
-            state.tokType = isKeyword(state, _word);
+        state._word = readWord_simple(state);
+        if (state._word.length > 1 && state._word.length < 11) {
+            state.tokType = isKeyword(state);
         } else {
             state.tokType = state._name;
         }
-        finishToken(state, state.tokType, _word);
+        finishToken(state, state.tokType, state._word);
     };
-
-
-    // As above, read an identifier or keyword token. Will check for
-    // strict reserved words when necessary. Also checks for ECMAScript
-    // 3 / 5 reserved words.
-    // Replaces readWord depending on parse state.
-    function readWord_checkReserved(state) {
-        state.tokRegexpAllowed = false;
-
-        _word = readWord_simple(state);
-        if (_word.length > 1 && _word.length < 11) {
-            state.tokType = isKeyword(state, _word);
-        } else {
-            state.tokType = state._name;
-        }
-        finishToken(state, state.tokType, _word);
-    }
 
     // ## Parser
     // A recursive descent parser operates by defining functions for all
@@ -2237,7 +2235,7 @@
     // Test whether a statement node is the string literal `"use strict"`.
     function isUseStrict(state, stmt) {
         return state.ecmaVersion >= 5 && stmt.type === ParserAPI.type.EXPRESSION_STATEMENT &&
-            stmt.expression instanceof ParserAPI.node.Literal && stmt.expression.value === _use_strict;
+            stmt.expression.type === ParserAPI.type.LITERAL && stmt.expression.value === _use_strict;
     }
 
     // Predicate that tests whether the next token is of the given
@@ -2289,7 +2287,8 @@
         if (expr.type === sMemberExpression) {
             return;
         } else if (expr.type === ParserAPI.type.IDENTIFIER) {
-            if (state.strict && isStrictBadIdWord(expr.name))
+            state._word = expr.name;
+            if (state.strict && isStrictBadIdWord(state))
                 raise(state, state.tokPos, 'Assigning to ' + expr.name + ' in strict mode');
         } else {
             raise(state, state.tokPos, 'Assigning to rvalue');
@@ -2449,6 +2448,8 @@
         var node = null;
         // @if LOCATIONS=true
         var loc = new ParserAPI.node.SourceLocation();
+        loc.start = state.tokStartLoc;
+        loc.source = sourceFile;
         // @endif
         next(state);
         state.labels.push(loopLabel);
@@ -2634,7 +2635,8 @@
             if(state.tokType !== state._parenL) { unexpected(state); }
             next(state);
             clause.param = parse_Identifier(state);
-            if (state.strict && isStrictBadIdWord(clause.param.name))
+            state._word = clause.param.name;
+            if (state.strict && isStrictBadIdWord(state))
                 raise(state, state.tokPos, 'Binding ' + clause.param.name + ' in strict mode');
             if(state.tokType !== state._parenR) { unexpected(state); }
             next(state);
@@ -2903,7 +2905,8 @@
         for (;;) {
             var decl = new ParserAPI.node.VariableDeclarator();
             decl.id = parse_Identifier(state);
-            if (state.strict && isStrictBadIdWord(decl.id.name))
+            state._word = decl.id.name;
+            if (state.strict && isStrictBadIdWord(state))
                 raise(state, state.tokPos, 'Binding ' + decl.id.name + ' in strict mode');
             if (state.tokType === state._eq) {
                 next(state);
@@ -3106,10 +3109,8 @@
             node = new ParserAPI.node.CallExpression(base);
             parse_ExpressionList(state, node.arguments);
             // @if LOCATIONS=true
-            if(state.locations === true) {
-                node.loc.start = base.loc.start;
-                node.loc.end = lastEndLoc;
-            }
+            node.loc.start = base.loc.start;
+            node.loc.end = lastEndLoc;
             // @endif
             return parseSubscripts(state, node);
 
@@ -3163,7 +3164,7 @@
     }
 
     function parse_Literal_Number(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralNumber();
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
@@ -3173,7 +3174,7 @@
     }
 
     function parse_Literal_String(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralString();
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
@@ -3183,7 +3184,7 @@
     }
 
     function parse_Literal_Regexp(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralRegExp();
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
@@ -3193,7 +3194,7 @@
     }
 
     function parse_Literal_Null(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralNull();
         next(state);
         // @if LOCATIONS=true
         node.loc.end = lastEndLoc;
@@ -3201,7 +3202,7 @@
         return node;
     }
     function parse_Literal_True(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralTrue();
         next(state);
         // @if LOCATIONS=true
         node.loc.end = lastEndLoc;
@@ -3209,7 +3210,7 @@
         return node;
     }
     function parse_Literal_False(state) {
-        var node = new ParserAPI.node.Literal();
+        var node = new ParserAPI.node.LiteralFalse();
         next(state);
         // @if LOCATIONS=true
         node.loc.end = lastEndLoc;
@@ -3219,7 +3220,7 @@
 
     function parseExprAtom_parenL(state) {
         // @if LOCATIONS=true
-        var tokStartLoc1 = tokStartLoc;
+        var tokStartLoc1 = state.tokStartLoc;
         // @endif
         next(state);
         var val = parseExpression(state, false);
@@ -3431,7 +3432,8 @@
                     if (node.id) id = node.id;
                     else continue;
                 }
-                if (isStrictReservedWord(id.name) || isStrictBadIdWord(id.name))
+                state._word = id.name;
+                if (isStrictReservedWord(state) || isStrictBadIdWord(state))
                     raise(state, state.tokPos, 'Defining \'' +id.name+ '\' in strict mode');
                 if (i >= 0) for (var j = 0; j < i; ++j) if (id.name === node.params[j].name)
                     raise(state, state.tokPos, 'Argument name clash in strict mode');
