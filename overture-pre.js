@@ -637,7 +637,9 @@
             program: null,
             sourceFile: null,
             _word: '',
-            tokStartLoc: null
+            tokStartLoc: null,
+            tokEndLoc: null,
+            lastEndLoc: null
 
         };
         buildState(state);
@@ -739,10 +741,10 @@
     // offset. `input` should be the code string that the offset refers
     // into.
 
-    var getLineInfo = exports.getLineInfo = function getLineInfo(input, offset) {
+    var getLineInfo = exports.getLineInfo = function getLineInfo(state, input, offset) {
         for (var line = 1, cur = 0;;) {
-            lineBreak.lastIndex = cur;
-            var match = lineBreak.exec(input);
+            state.lineBreak.lastIndex = cur;
+            var match = state.lineBreak.exec(input);
             if (match && match.index < offset) {
                 ++line;
                 cur = match.index + match[0].length;
@@ -771,7 +773,6 @@
     // When `state.locations` is true, these hold objects
     // containing the tokens start and end line/column pairs.
 
-    var tokEndLoc;
     var tokCurLine = 1, tokLineStart = 0;
 
     // The type and value of the current token. Token types are objects,
@@ -794,7 +795,6 @@
     // These store the position of the previous token, which is useful
     // when finishing a node and assigning its `end` position.
 
-    var lastEndLoc;
 
     // This is the parser's state. `state.inFunction` is used to reject
     // `return` statements outside of functions, `state.labels` to verify that
@@ -810,7 +810,7 @@
     function raise(state, pos, message) {
         pos = pos || state.tokPos;
         if (typeof(pos) === 'number') {
-            pos = getLineInfo(state.input, pos);
+            pos = getLineInfo(state, state.input, pos);
         }
         message += ' (' + pos.line + ':' + pos.column + ')';
         throw new SyntaxError(message);
@@ -837,34 +837,6 @@
         // @endif
     }
 
-    // The type field is a string representing the AST variant type. Each subtype of Node is documented below with the specific string of its type field. You can use this field to determine which interface a node implements.
-
-
-
-    // A member expression. If computed === true, the node corresponds to a computed e1[e2] expression and property is an Expression. If computed === false, the node corresponds to a static e1.x expression and property is an Identifier.
-    // Note: "_dot" and "_bracketL" suffix is for overture performance
-
-    var sMemberExpression = new String('MemberExpression');
-    var MemberExpression_dot = function MemberExpression_dot() {
-        this.type = sMemberExpression;
-        this.object = null;                    // Expression
-        this.property = null;               // Identifier | Expression
-        this.computed = false;              // boolean
-        // @if LOCATIONS=true
-        this.loc = new ParserAPI.node.SourceLocation();    // SourceLocation | null
-        // @endif
-    };
-
-    var MemberExpression_bracketL = function MemberExpression_bracketL(b) {
-        this.type = sMemberExpression;
-        this.object = b;                    // Expression
-        this.property = null;               // Identifier | Expression
-        this.computed = true;               // boolean
-        // @if LOCATIONS=true
-        this.loc = new ParserAPI.node.SourceLocation();    // SourceLocation | null
-        // @endif
-    };
-
     // Overture helper
     var ObjectExpressionProp = function ObjectExpressionProp(state) {
         this.key = null;                    // Literal | Identifier
@@ -880,6 +852,13 @@
 
 
     function buildState(state) {
+
+        // Whether a single character denotes a newline.
+        state.newline = /[\n\r\u2028\u2029]/;
+
+        // Matches a whole line break (where CRLF is considered a single
+        // line break). Used to count lines.
+        state.lineBreak = /\r\n|[\n\r\u2028\u2029]/g;
 
         state._num = new Node('num');
         state._regexp = new Node('regexp');
@@ -1243,15 +1222,6 @@
 
     // ## Character categories
 
-    // Whether a single character denotes a newline.
-
-    var newline = /[\n\r\u2028\u2029]/;
-
-    // Matches a whole line break (where CRLF is considered a single
-    // line break). Used to count lines.
-
-    var lineBreak = /\r\n|[\n\r\u2028\u2029]/g;
-
     // Big ugly regular expressions that match characters in the
     // whitespace, identifier, and identifier-start categories. These
     // are only applied when a character is found to actually have a
@@ -1367,9 +1337,9 @@
         // @if LOCATIONS=true
         tokCurLine = 1;
         tokLineStart = 0;
-        lastEndLoc = new ParserAPI.node.Position(state);
-        lastEndLoc.line = tokCurLine;
-        lastEndLoc.column = state.tokPos - tokLineStart;
+        state.lastEndLoc = new ParserAPI.node.Position(state);
+        state.lastEndLoc.line = tokCurLine;
+        state.lastEndLoc.column = state.tokPos - tokLineStart;
         // @endif
         skipSpace(state);
     }
@@ -1380,9 +1350,9 @@
 
     function finishToken(state, type, val) {
         // @if LOCATIONS=true
-        tokEndLoc = new ParserAPI.node.Position(state);
-        tokEndLoc.line = tokCurLine;
-        tokEndLoc.column = state.tokPos - tokLineStart;
+        state.tokEndLoc = new ParserAPI.node.Position(state);
+        state.tokEndLoc.line = tokCurLine;
+        state.tokEndLoc.column = state.tokPos - tokLineStart;
         // @endif
         state.tokEnd = state.tokPos;
         state.tokType = type;
@@ -1410,7 +1380,7 @@
 
         // @if LOCATIONS=true
         _comment = state.input.slice(_start + 2, _end);
-        var _match = _comment.match(lineBreak);
+        var _match = _comment.match(state.lineBreak);
         if(_match) {
             tokCurLine += _match.length;
             _lastMatch = _match[_match.length-1];
@@ -2208,7 +2178,7 @@
     function next(state) {
         state.lastEnd = state.tokEnd;
         // @if LOCATIONS=true
-        lastEndLoc = tokEndLoc;
+        state.lastEndLoc = state.tokEndLoc;
         // @endif
         readToken(state);
     }
@@ -2250,7 +2220,7 @@
 
     // Tests to see if a semicolon can be inserted at the current position.
     function cannotInsertSemicolon(state) {
-        return state.tokType !== state._eof && state.tokType !== state._braceR && !newline.test(state.input.substring(state.lastEnd, state.tokStart));
+        return state.tokType !== state._eof && state.tokType !== state._braceR && !state.newline.test(state.input.substring(state.lastEnd, state.tokStart));
     }
 
     function not_semicolon(state) {
@@ -2258,7 +2228,7 @@
             next(state);
             return false;
         } else {
-            return state.tokType !== state._eof && state.tokType !== state._braceR && !newline.test(state.input.substring(state.lastEnd, state.tokStart));
+            return state.tokType !== state._eof && state.tokType !== state._braceR && !state.newline.test(state.input.substring(state.lastEnd, state.tokStart));
         }
     }
 
@@ -2284,7 +2254,7 @@
     // to.
 
     function checkLVal(state, expr) {
-        if (expr.type === sMemberExpression) {
+        if (expr.type === ParserAPI.type.MEMBER_EXPRESSION) {
             return;
         } else if (expr.type === ParserAPI.type.IDENTIFIER) {
             state._word = expr.name;
@@ -2323,7 +2293,7 @@
                 }
         }
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2365,7 +2335,7 @@
         }
         check_label_exists_break(state, node.label, starttype);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2401,7 +2371,7 @@
         }
         check_label_exists_continue(state, node.label, starttype);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2412,7 +2382,7 @@
         next(state);
         semicolon(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2429,7 +2399,7 @@
         node.test = parseParenExpression(state);
         semicolon(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2462,7 +2432,7 @@
             next(state);
             parseVar(state, init, true);
             // @if LOCATIONS=true
-            init.loc.end = lastEndLoc;
+            init.loc.end = state.lastEndLoc;
             // @endif
 
             if (init.declarations.length === 1) {
@@ -2502,7 +2472,7 @@
         state.labels.pop();
         // @if LOCATIONS=true
         node.loc.start = loc.start;
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2526,7 +2496,7 @@
             node.alternate = parseStatement(state);
         }
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2545,7 +2515,7 @@
                 semicolon(state);
             }
             // @if LOCATIONS=true
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return node;
         } else  {
@@ -2598,13 +2568,13 @@
             }
             // @if LOCATIONS=true
             if(cur !== null) {
-                cur.loc.end = lastEndLoc;
+                cur.loc.end = state.lastEndLoc;
             }
             // @endif
         }
         state.labels.pop();
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2613,12 +2583,12 @@
     function parse_ThrowStatement(state) {
         var node = new ParserAPI.node.ThrowStatement();
         next(state);
-        if (newline.test(state.input.substring(state.lastEnd, state.tokStart)))
+        if(state.newline.test(state.input.substring(state.lastEnd, state.tokStart)))
             raise(state, state.lastEnd, 'Illegal newline after throw');
         node.argument = parseExpression(state, false);
         semicolon(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2642,7 +2612,7 @@
             next(state);
             clause.body = parse_BlockStatement(state);
             // @if LOCATIONS=true
-            clause.loc.end = lastEndLoc;
+            clause.loc.end = state.lastEndLoc;
             // @endif
             node.handler = clause;
         }
@@ -2656,7 +2626,7 @@
             raise(state, state.tokPos, 'Missing catch or finally clause');
 
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2668,7 +2638,7 @@
         parseVar(state, node, false);
         semicolon(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2682,7 +2652,7 @@
         node.body = parseStatement(state);
         state.labels.pop();
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2695,7 +2665,7 @@
         node.object = parseParenExpression(state);
         node.body = parseStatement(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2705,7 +2675,7 @@
         var node = new ParserAPI.node.EmptyStatement();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2752,7 +2722,7 @@
         }
         // @if LOCATIONS=true
         node.loc.start = expr.loc.start;
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
 
@@ -2763,7 +2733,7 @@
         node.expression = parseExpression(state, false);
         semicolon(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2848,7 +2818,7 @@
         if (_strict && !oldStrict) setStrict(state, false);
 
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2869,7 +2839,7 @@
         next(state);
         node.body = parseStatement(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2882,7 +2852,7 @@
         next(state);
         node.body = parseStatement(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2895,7 +2865,7 @@
         next(state);
         node.body = parseStatement(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -2915,7 +2885,7 @@
                 unexpected(state);
             }
             // @if LOCATIONS=true
-            decl.loc.end = lastEndLoc;
+            decl.loc.end = state.lastEndLoc;
             // @endif
             node.declarations.push(decl);
             if (state.tokType !== state._comma) break;
@@ -2946,7 +2916,7 @@
             }
             // @if LOCATIONS=true
             node.loc.start = expr.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return node;
         }
@@ -2967,7 +2937,7 @@
             checkLVal(state, left);
             // @if LOCATIONS=true
             node.loc.start = left.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return node;
         }
@@ -2988,7 +2958,7 @@
             node.alternate = parseMaybeAssign(state, noIn);
             // @if LOCATIONS=true
             node.loc.start = expr.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return node;
         }
@@ -3020,7 +2990,7 @@
             node.right = parseExprOp(state, parseMaybeUnary(state), curTokType, noIn);
             // @if LOCATIONS=true
             node.loc.start = node.left.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseExprOp(state, node, minTokType, noIn);
         }
@@ -3068,7 +3038,7 @@
             node = expr;
         }
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3083,24 +3053,27 @@
         var node = null;
         if (state.tokType === state._dot) {
             next(state);
-            node = new MemberExpression_dot();
+            node = new ParserAPI.node.MemberExpression();
             node.object = base;
+            node.computed = false;
             node.property = parse_Identifier_liberal(state);
             // @if LOCATIONS=true
             node.loc.start = base.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseSubscripts(state, node);
 
         } else if (state.tokType === state._bracketL) {
             next(state);
-            node = new MemberExpression_bracketL(base);
+            node = new ParserAPI.node.MemberExpression();
+            node.object = base;
+            node.computed = true;
             node.property = parseExpression(state, false);
             if(state.tokType !== state._bracketR) { unexpected(state); }
             next(state);
             // @if LOCATIONS=true
             node.loc.start = base.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseSubscripts(state, node);
 
@@ -3110,7 +3083,7 @@
             parse_ExpressionList(state, node.arguments);
             // @if LOCATIONS=true
             node.loc.start = base.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseSubscripts(state, node);
 
@@ -3123,24 +3096,27 @@
         var node = null;
         if (state.tokType === state._dot) {
             next(state);
-            node = new MemberExpression_dot();
+            node = new ParserAPI.node.MemberExpression();
             node.object = base;
+            node.computed = false;
             node.property = parse_Identifier_liberal(state);
             // @if LOCATIONS=true
             node.loc.start = base.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseSubscripts_nocalls(state, node);
 
         } else if (state.tokType === state._bracketL) {
             next(state);
-            node = new MemberExpression_bracketL(base);
+            node = new ParserAPI.node.MemberExpression();
+            node.object = base;
+            node.computed = true;
             node.property = parseExpression(state, false);
             if(state.tokType !== state._bracketR) { unexpected(state); }
             next(state);
             // @if LOCATIONS=true
             node.loc.start = base.loc.start;
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return parseSubscripts_nocalls(state, node);
 
@@ -3158,7 +3134,7 @@
         var node = new ParserAPI.node.ThisExpression();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3168,7 +3144,7 @@
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3178,7 +3154,7 @@
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3188,7 +3164,7 @@
         node.value = state.tokVal;
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3197,7 +3173,7 @@
         var node = new ParserAPI.node.LiteralNull();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3205,7 +3181,7 @@
         var node = new ParserAPI.node.LiteralTrue();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3213,7 +3189,7 @@
         var node = new ParserAPI.node.LiteralFalse();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3226,7 +3202,7 @@
         var val = parseExpression(state, false);
         // @if LOCATIONS=true
         val.loc.start = tokStartLoc1;
-        val.loc.end = tokEndLoc;
+        val.loc.end = state.tokEndLoc;
         // @endif
         if(state.tokType !== state._parenR) { unexpected(state); }
         next(state);
@@ -3238,7 +3214,7 @@
         next(state);
         parse_ArrayExpressionList(state, node.elements);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3247,7 +3223,7 @@
         var node = new ParserAPI.node.FunctionExpression();
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return parseFunction(state, node);
     }
@@ -3286,7 +3262,7 @@
             parse_ExpressionList(state, node.arguments);
         }
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3375,7 +3351,7 @@
         next(state);
         validateObjectProperties(state, node.properties);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3440,7 +3416,7 @@
             }
         }
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
 
         return node;
@@ -3502,7 +3478,7 @@
         state.tokRegexpAllowed = false;
         next(state);
         // @if LOCATIONS=true
-        node.loc.end = lastEndLoc;
+        node.loc.end = state.lastEndLoc;
         // @endif
         return node;
     }
@@ -3516,7 +3492,7 @@
             state.tokRegexpAllowed = false;
             next(state);
             // @if LOCATIONS=true
-            node.loc.end = lastEndLoc;
+            node.loc.end = state.lastEndLoc;
             // @endif
             return node;
         }

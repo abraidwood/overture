@@ -27,7 +27,7 @@ function simpleBenchmark(parser, source, options) {
         parser.runner(source.text, opts);
         lines += source.lines;
         dt = Date.now() - t0;
-        if (dt > 1000) break;
+        if (dt > 10000) break;
         break;
     }
     if(runProfile) {console.profileEnd(parser.name + ' - ' + source.name);}
